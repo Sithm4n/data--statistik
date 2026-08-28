@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { UploadRecord } from '../types';
-import { Clock, FileSpreadsheet, Trash2, CheckCircle2, AlertCircle, Loader2 } from 'lucide-react';
+import { FileSpreadsheet, Trash2, CheckCircle2, Inbox, RefreshCw, XCircle, Download } from 'lucide-react';
 
 interface UploadLogsProps {
   uploads: UploadRecord[];
@@ -8,152 +8,169 @@ interface UploadLogsProps {
 }
 
 export const UploadLogs: React.FC<UploadLogsProps> = ({ uploads, onDeleteUpload }) => {
-  const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
-
-  const confirmDelete = () => {
-    if (deleteConfirmId) {
-      onDeleteUpload(deleteConfirmId);
-      setDeleteConfirmId(null);
-    }
-  };
+  const totalFiles = uploads.length;
+  // Mocking status logic - in a real app this might have processing states
+  const successCount = uploads.length;
+  const processingCount = 0;
+  const failedCount = 0;
 
   return (
-    <div className="w-full mx-auto p-4 md:p-8 flex flex-col gap-6">
-      
-      {/* Page Title */}
-      <div className="mb-2">
-        <h2 className="text-2xl font-bold text-navy">Riwayat Unggah</h2>
-        <p className="text-muted text-sm mt-1">Kelola dan pantau seluruh file statistik yang pernah diunggah.</p>
+    <div className="flex flex-col w-full px-8 py-12 gap-8 relative overflow-hidden min-h-[calc(100vh-5rem)]">
+      {/* Background Decor */}
+      <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-primary/20 rounded-full blur-[120px] -z-10 mix-blend-screen pointer-events-none"></div>
+      <div className="absolute bottom-0 left-0 w-[400px] h-[400px] bg-tertiary-container/10 rounded-full blur-[100px] -z-10 pointer-events-none"></div>
+
+      {/* Header Section */}
+      <div className="flex flex-col gap-2 relative z-10">
+        <h1 className="text-5xl font-bold text-on-surface tracking-tight bg-gradient-to-br from-on-surface to-on-surface-variant bg-clip-text text-transparent">Riwayat Unggah</h1>
+        <p className="text-base text-on-surface-variant max-w-2xl">Kelola dan pantau seluruh file statistik yang pernah diunggah. Visualisasikan proses sinkronisasi data Anda secara real-time.</p>
       </div>
 
-      {/* Upload Summary */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-2">
-        <div className="bg-white p-4 border border-border-blue rounded-[14px] shadow-sm flex items-center gap-4">
-          <div className="bg-slate-100 p-2 rounded-lg text-slate-500">
-            <FileSpreadsheet className="w-5 h-5" />
+      {/* Stats Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 z-10">
+        {/* Card 1: Total */}
+        <div className="flex items-center gap-6 p-6 rounded-2xl bg-surface-container-low/40 backdrop-blur-xl border border-outline-variant/20 shadow-[0_8px_32px_rgba(0,0,0,0.2)] hover:-translate-y-1 transition-transform duration-300 relative overflow-hidden group">
+          <div className="absolute inset-0 bg-gradient-to-br from-on-surface/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
+          <div className="w-14 h-14 rounded-full bg-secondary-container/30 border border-secondary/20 flex items-center justify-center shrink-0">
+            <FileSpreadsheet className="text-secondary w-6 h-6" />
           </div>
-          <div>
-            <div className="text-2xl font-bold text-navy">{uploads.length}</div>
-            <div className="text-[11px] font-bold uppercase text-muted tracking-wide mt-1">Total File</div>
-          </div>
-        </div>
-        <div className="bg-white p-4 border border-border-blue rounded-[14px] shadow-sm flex items-center gap-4">
-          <div className="bg-[#159570]/10 p-2 rounded-lg text-[#159570]">
-            <CheckCircle2 className="w-5 h-5" />
-          </div>
-          <div>
-            <div className="text-2xl font-bold text-navy">{uploads.length}</div>
-            <div className="text-[11px] font-bold uppercase text-muted tracking-wide mt-1">Berhasil</div>
+          <div className="flex flex-col">
+            <span className="text-4xl font-bold text-on-surface leading-none mb-1">{totalFiles}</span>
+            <span className="font-mono text-xs text-on-surface-variant uppercase tracking-widest font-medium">Total File</span>
           </div>
         </div>
-        <div className="bg-white p-4 border border-border-blue rounded-[14px] shadow-sm flex items-center gap-4">
-          <div className="bg-blue-100 p-2 rounded-lg text-primary">
-            <Loader2 className="w-5 h-5" />
+
+        {/* Card 2: Berhasil */}
+        <div className="flex items-center gap-6 p-6 rounded-2xl bg-surface-container-low/40 backdrop-blur-xl border border-outline-variant/20 shadow-[0_8px_32px_rgba(0,0,0,0.2)] hover:-translate-y-1 transition-transform duration-300 relative overflow-hidden group">
+          <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
+          <div className="w-14 h-14 rounded-full bg-primary/20 border border-primary/30 flex items-center justify-center shrink-0 shadow-[0_0_15px_rgba(56,189,248,0.2)]">
+            <CheckCircle2 className="text-primary w-6 h-6" />
           </div>
-          <div>
-            <div className="text-2xl font-bold text-navy">0</div>
-            <div className="text-[11px] font-bold uppercase text-muted tracking-wide mt-1">Diproses</div>
+          <div className="flex flex-col">
+            <span className="text-4xl font-bold text-on-surface leading-none mb-1">{successCount}</span>
+            <span className="font-mono text-xs text-on-surface-variant uppercase tracking-widest font-medium">Berhasil</span>
           </div>
         </div>
-        <div className="bg-white p-4 border border-border-blue rounded-[14px] shadow-sm flex items-center gap-4">
-          <div className="bg-red-100 p-2 rounded-lg text-[#DC3545]">
-            <AlertCircle className="w-5 h-5" />
+
+        {/* Card 3: Diproses */}
+        <div className="flex items-center gap-6 p-6 rounded-2xl bg-surface-container-low/40 backdrop-blur-xl border border-outline-variant/20 shadow-[0_8px_32px_rgba(0,0,0,0.2)] hover:-translate-y-1 transition-transform duration-300 relative overflow-hidden group">
+          <div className="absolute inset-0 bg-gradient-to-br from-tertiary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
+          <div className="w-14 h-14 rounded-full bg-tertiary-container/30 border border-tertiary/30 flex items-center justify-center shrink-0">
+            <RefreshCw className="text-tertiary w-6 h-6" />
           </div>
-          <div>
-            <div className="text-2xl font-bold text-navy">0</div>
-            <div className="text-[11px] font-bold uppercase text-muted tracking-wide mt-1">Gagal</div>
+          <div className="flex flex-col">
+            <span className="text-4xl font-bold text-on-surface leading-none mb-1 text-on-surface-variant/50">{processingCount}</span>
+            <span className="font-mono text-xs text-on-surface-variant uppercase tracking-widest font-medium">Diproses</span>
+          </div>
+        </div>
+
+        {/* Card 4: Gagal */}
+        <div className="flex items-center gap-6 p-6 rounded-2xl bg-surface-container-low/40 backdrop-blur-xl border border-outline-variant/20 shadow-[0_8px_32px_rgba(0,0,0,0.2)] hover:-translate-y-1 transition-transform duration-300 relative overflow-hidden group">
+          <div className="absolute inset-0 bg-gradient-to-br from-error/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
+          <div className="w-14 h-14 rounded-full bg-error-container/20 border border-error/30 flex items-center justify-center shrink-0">
+            <XCircle className="text-error w-6 h-6" />
+          </div>
+          <div className="flex flex-col">
+            <span className="text-4xl font-bold text-on-surface leading-none mb-1 text-on-surface-variant/50">{failedCount}</span>
+            <span className="font-mono text-xs text-on-surface-variant uppercase tracking-widest font-medium">Gagal</span>
           </div>
         </div>
       </div>
 
-      <div className="bg-white rounded-[16px] shadow-sm border border-border-blue p-6">
-        <div className="flex justify-between items-center mb-6">
-          <h2 className="text-lg font-bold text-navy">Daftar File</h2>
+      {/* Data Table Section */}
+      <div className="flex flex-col flex-1 rounded-3xl bg-surface-container-lowest/60 backdrop-blur-2xl border border-outline-variant/20 shadow-[0_16px_40px_rgba(0,0,0,0.3)] relative z-10 overflow-hidden">
+        <div className="p-6 border-b border-outline-variant/10 flex items-center justify-between bg-surface-container-low/40">
+          <h2 className="text-xl font-medium text-on-surface">Daftar File</h2>
         </div>
         
-        {uploads.length === 0 ? (
-          <div className="text-center py-12 text-muted">
-            <FileSpreadsheet className="w-12 h-12 mx-auto mb-3 text-slate-300" />
-            <p className="font-semibold text-navy">Belum ada riwayat unggah file.</p>
-            <p className="text-sm">Silakan unggah file Excel pada halaman utama.</p>
-          </div>
-        ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse">
-              <thead>
-                <tr className="bg-slate-50 border-b border-border-blue text-muted text-xs font-bold uppercase tracking-wider">
-                  <th className="px-6 py-3">Nama File</th>
-                  <th className="px-6 py-3">Tahun Data</th>
-                  <th className="px-6 py-3">Waktu Diunggah</th>
-                  <th className="px-6 py-3">Jumlah Baris</th>
-                  <th className="px-6 py-3">Status</th>
-                  <th className="px-6 py-3 text-right">Aksi</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100 text-sm">
-                {uploads.map((upload) => (
-                  <tr key={upload.id} className="hover:bg-slate-50 transition-colors">
-                    <td className="px-6 py-4 font-bold text-navy flex items-center gap-2">
-                      <div className="bg-[#159570]/10 p-1.5 rounded text-[#159570]">
-                        <FileSpreadsheet className="w-4 h-4" />
+        <div className="overflow-x-auto">
+          <table className="w-full text-left border-collapse">
+            <thead>
+              <tr className="bg-surface-container/40 backdrop-blur-md">
+                <th className="px-6 py-4 font-mono text-xs text-on-surface-variant tracking-wider font-medium">NAMA FILE</th>
+                <th className="px-6 py-4 font-mono text-xs text-on-surface-variant tracking-wider font-medium">TAHUN DATA</th>
+                <th className="px-6 py-4 font-mono text-xs text-on-surface-variant tracking-wider font-medium">WAKTU DIUNGGAH</th>
+                <th className="px-6 py-4 font-mono text-xs text-on-surface-variant tracking-wider font-medium text-right">JUMLAH BARIS</th>
+                <th className="px-6 py-4 font-mono text-xs text-on-surface-variant tracking-wider font-medium text-center">STATUS</th>
+                <th className="px-6 py-4 font-mono text-xs text-on-surface-variant tracking-wider font-medium text-center">AKSI</th>
+              </tr>
+            </thead>
+            <tbody className="text-sm text-on-surface">
+              {uploads.map((upload) => (
+                <tr key={upload.id} className="group hover:bg-surface-variant/10 transition-colors border-b border-outline-variant/5">
+                  <td className="px-6 py-4">
+                    <div className="flex items-center gap-3">
+                      <div className="w-8 h-8 rounded-lg bg-surface-variant/50 flex items-center justify-center border border-outline-variant/20">
+                        <FileSpreadsheet className="text-secondary w-4 h-4" />
                       </div>
-                      {upload.filename}
-                    </td>
-                    <td className="px-6 py-4">
-                      <span className="bg-sky text-primary px-2 py-1 rounded-md font-bold text-xs">
-                        {upload.year}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 text-muted text-xs">{upload.timestamp}</td>
-                    <td className="px-6 py-4 text-navy font-semibold">{upload.totalRows.toLocaleString()}</td>
-                    <td className="px-6 py-4">
-                      <span className="bg-[#159570]/10 text-[#159570] px-2 py-1 rounded-md font-bold text-xs inline-flex items-center gap-1">
-                        <CheckCircle2 className="w-3 h-3" /> Berhasil
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 text-right">
+                      <span className="font-medium text-on-surface group-hover:text-primary transition-colors">{upload.filename}</span>
+                    </div>
+                  </td>
+                  <td className="px-6 py-4">
+                    <span className="px-3 py-1 rounded-full bg-primary-container/20 text-primary border border-primary/20 font-mono text-xs font-medium">
+                      {upload.year}
+                    </span>
+                  </td>
+                  <td className="px-6 py-4 text-on-surface-variant">{upload.uploadTime}</td>
+                  <td className="px-6 py-4 text-right font-mono text-sm text-on-surface">
+                    {upload.totalRows.toLocaleString('id-ID')}
+                  </td>
+                  <td className="px-6 py-4">
+                    <div className="flex items-center justify-center">
+                      <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-primary/10 border border-primary/20 text-primary font-mono text-[11px] uppercase tracking-wide font-medium">
+                        <CheckCircle2 className="w-3.5 h-3.5" />
+                        Berhasil
+                      </div>
+                    </div>
+                  </td>
+                  <td className="px-6 py-4">
+                    <div className="flex items-center justify-center gap-2 opacity-50 group-hover:opacity-100 transition-opacity">
+                      <button className="w-8 h-8 rounded-full flex items-center justify-center hover:bg-surface-variant/50 text-on-surface-variant hover:text-on-surface transition-colors" title="Download">
+                        <Download className="w-4 h-4" />
+                      </button>
                       <button 
-                        onClick={() => setDeleteConfirmId(upload.id)}
-                        className="text-red-500 hover:text-red-700 hover:bg-red-50 p-2 rounded-lg transition-colors"
-                        title="Hapus Data Ini"
-                        aria-label="Hapus File"
+                        onClick={() => {
+                          if(window.confirm(`Hapus file ${upload.filename}? Data terkait juga akan terhapus dari dashboard.`)) {
+                            onDeleteUpload(upload.id);
+                          }
+                        }}
+                        className="w-8 h-8 rounded-full flex items-center justify-center hover:bg-error-container/30 text-on-surface-variant hover:text-error transition-colors" 
+                        title="Delete"
                       >
                         <Trash2 className="w-4 h-4" />
                       </button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </div>
+                    </div>
+                  </td>
+                </tr>
+              ))}
 
-      {/* Confirmation Modal (Glassmorphism) */}
-      {deleteConfirmId && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 backdrop-blur-sm p-4">
-          <div className="bg-white/90 backdrop-blur-xl border border-white rounded-[18px] shadow-2xl w-full max-w-md p-6 animate-in fade-in zoom-in-95 duration-200">
-            <h3 className="text-lg font-bold text-navy mb-2">Hapus file ini?</h3>
-            <p className="text-muted text-sm mb-6 leading-relaxed">
-              Data yang terkait dengan file akan ikut dihapus dari dashboard. Tindakan ini tidak dapat dibatalkan.
-            </p>
-            <div className="flex justify-end gap-3">
-              <button 
-                onClick={() => setDeleteConfirmId(null)}
-                className="px-4 py-2 text-sm font-bold text-navy bg-slate-100 hover:bg-slate-200 rounded-lg transition-colors"
-              >
-                Batal
-              </button>
-              <button 
-                onClick={confirmDelete}
-                className="px-4 py-2 text-sm font-bold text-white bg-[#DC3545] hover:bg-red-700 rounded-lg transition-colors shadow-sm"
-              >
-                Hapus File
-              </button>
-            </div>
-          </div>
+              {uploads.length === 0 ? (
+                <tr>
+                  <td colSpan={6} className="px-6 py-16 text-center">
+                    <div className="flex flex-col items-center justify-center gap-3 opacity-40">
+                      <div className="w-16 h-16 rounded-full bg-surface-variant/30 flex items-center justify-center border border-outline-variant/10">
+                        <Inbox className="w-8 h-8 text-on-surface-variant" />
+                      </div>
+                      <p className="text-sm text-on-surface-variant">Belum ada file yang diunggah</p>
+                    </div>
+                  </td>
+                </tr>
+              ) : (
+                <tr className="border-b border-outline-variant/5">
+                  <td className="px-6 py-12 text-center" colSpan={6}>
+                    <div className="flex flex-col items-center justify-center gap-3 opacity-40">
+                      <div className="w-16 h-16 rounded-full bg-surface-variant/30 flex items-center justify-center border border-outline-variant/10">
+                        <Inbox className="w-8 h-8 text-on-surface-variant" />
+                      </div>
+                      <p className="text-sm text-on-surface-variant">Akhir dari riwayat unggahan</p>
+                    </div>
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
         </div>
-      )}
+      </div>
     </div>
   );
 };

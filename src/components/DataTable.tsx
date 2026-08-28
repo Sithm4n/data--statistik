@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ChevronLeft, ChevronRight, Edit2, Check, X as XIcon, Trash2 } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Edit2, Check, X as XIcon, Trash2, MoreHorizontal } from 'lucide-react';
 
 interface DataTableProps {
   data: any[];
@@ -40,178 +40,175 @@ export const DataTable: React.FC<DataTableProps> = ({ data, type, onEdit, onDele
   };
 
   return (
-    <div className="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm flex flex-col shrink-0">
-      <div className="overflow-x-auto">
-        <table className="w-full text-left text-sm">
-          <thead className="bg-slate-50 border-b border-slate-200 text-slate-400 text-xs font-bold uppercase tracking-wider">
-            <tr>
-              <th className="px-6 py-3">No</th>
-              <th className="px-6 py-3 text-blue-600">Tahun</th>
+    <div className="flex flex-col bg-surface-container-low/40 backdrop-blur-xl border border-primary/20 rounded-3xl overflow-hidden mt-2">
+      <div className="overflow-x-auto w-full">
+        <table className="w-full text-left border-collapse">
+          <thead>
+            <tr className="bg-surface-container/60 backdrop-blur-xl border-b border-primary/20">
+              <th className="py-4 px-6 font-mono text-xs text-on-surface-variant uppercase tracking-wider whitespace-nowrap w-16">No</th>
+              <th className="py-4 px-6 font-mono text-xs text-on-surface-variant uppercase tracking-wider whitespace-nowrap">Tahun</th>
               {type === 'eWalidata' && (
                 <>
-                  <th className="px-6 py-3">Kode DSSD</th>
-                  <th className="px-6 py-3">Uraian DSSD</th>
-                  <th className="px-6 py-3">Satuan</th>
-                  <th className="px-6 py-3">Definisi Operasional</th>
-                  <th className="px-6 py-3">Tag Urusan</th>
-                  <th className="px-6 py-3">Produsen Data</th>
-                  <th className="px-6 py-3">Waktu Upload</th>
-                  <th className="px-6 py-3">Terakhir Diubah</th>
-                  <th className="px-6 py-3">Aksi</th>
+                  <th className="py-4 px-6 font-mono text-xs text-on-surface-variant uppercase tracking-wider whitespace-nowrap">Kode DSSD</th>
+                  <th className="py-4 px-6 font-mono text-xs text-on-surface-variant uppercase tracking-wider min-w-[200px]">Uraian DSSD</th>
+                  <th className="py-4 px-6 font-mono text-xs text-on-surface-variant uppercase tracking-wider whitespace-nowrap">Satuan</th>
+                  <th className="py-4 px-6 font-mono text-xs text-on-surface-variant uppercase tracking-wider min-w-[300px]">Definisi Operasional</th>
+                  <th className="py-4 px-6 font-mono text-xs text-on-surface-variant uppercase tracking-wider whitespace-nowrap">Tag Urusan</th>
+                  <th className="py-4 px-6 font-mono text-xs text-on-surface-variant uppercase tracking-wider min-w-[150px]">Produsen Data</th>
+                  <th className="py-4 px-6 font-mono text-xs text-on-surface-variant uppercase tracking-wider whitespace-nowrap">Waktu Upload</th>
                 </>
               )}
               {type === 'sektoral' && (
                 <>
-                  <th className="px-6 py-3">Kode Data</th>
-                  <th className="px-6 py-3">Uraian DSSD</th>
-                  <th className="px-6 py-3">Satuan</th>
-                  <th className="px-6 py-3">Definisi Operasional</th>
-                  <th className="px-6 py-3">Tag Urusan</th>
-                  <th className="px-6 py-3">Produsen Data</th>
-                  <th className="px-6 py-3">Info Sub Kegiatan</th>
-                  <th className="px-6 py-3">Waktu Upload</th>
-                  <th className="px-6 py-3">Terakhir Diubah</th>
-                  <th className="px-6 py-3">Aksi</th>
+                  <th className="py-4 px-6 font-mono text-xs text-on-surface-variant uppercase tracking-wider whitespace-nowrap">Kode Data</th>
+                  <th className="py-4 px-6 font-mono text-xs text-on-surface-variant uppercase tracking-wider min-w-[200px]">Uraian DSSD</th>
+                  <th className="py-4 px-6 font-mono text-xs text-on-surface-variant uppercase tracking-wider whitespace-nowrap">Satuan</th>
+                  <th className="py-4 px-6 font-mono text-xs text-on-surface-variant uppercase tracking-wider min-w-[300px]">Definisi Operasional</th>
+                  <th className="py-4 px-6 font-mono text-xs text-on-surface-variant uppercase tracking-wider whitespace-nowrap">Tag Urusan</th>
+                  <th className="py-4 px-6 font-mono text-xs text-on-surface-variant uppercase tracking-wider min-w-[150px]">Produsen Data</th>
+                  <th className="py-4 px-6 font-mono text-xs text-on-surface-variant uppercase tracking-wider whitespace-nowrap">Info Sub Kegiatan</th>
+                  <th className="py-4 px-6 font-mono text-xs text-on-surface-variant uppercase tracking-wider whitespace-nowrap">Waktu Upload</th>
                 </>
               )}
               {type === 'spasial' && (
                 <>
-                  <th className="px-6 py-3">Kode Data</th>
-                  <th className="px-6 py-3">Nama Informasi Geospasial</th>
-                  <th className="px-6 py-3">Format Penyimpanan Data</th>
-                  <th className="px-6 py-3">Skala</th>
-                  <th className="px-6 py-3">Produsen Data</th>
-                  <th className="px-6 py-3">Waktu Upload</th>
-                  <th className="px-6 py-3">Terakhir Diubah</th>
-                  <th className="px-6 py-3">Aksi</th>
+                  <th className="py-4 px-6 font-mono text-xs text-on-surface-variant uppercase tracking-wider whitespace-nowrap">Kode Data</th>
+                  <th className="py-4 px-6 font-mono text-xs text-on-surface-variant uppercase tracking-wider min-w-[200px]">Nama Informasi Geospasial</th>
+                  <th className="py-4 px-6 font-mono text-xs text-on-surface-variant uppercase tracking-wider whitespace-nowrap">Format</th>
+                  <th className="py-4 px-6 font-mono text-xs text-on-surface-variant uppercase tracking-wider whitespace-nowrap">Skala</th>
+                  <th className="py-4 px-6 font-mono text-xs text-on-surface-variant uppercase tracking-wider min-w-[150px]">Produsen Data</th>
+                  <th className="py-4 px-6 font-mono text-xs text-on-surface-variant uppercase tracking-wider whitespace-nowrap">Waktu Upload</th>
                 </>
               )}
+              <th className="py-4 px-6 font-mono text-xs text-on-surface-variant uppercase tracking-wider whitespace-nowrap text-right sticky right-0 bg-surface-container/90 backdrop-blur-md shadow-[-10px_0_15px_-5px_rgba(0,0,0,0.1)]">Aksi</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-slate-100 font-mono text-[12px]">
+          <tbody className="divide-y divide-outline-variant/10">
             {currentRows.map((row, index) => {
               const globalIndex = indexOfFirstRow + index;
               const isEditing = editingRowIndex === globalIndex;
 
               return (
-              <tr key={index} className={`transition-colors ${isEditing ? 'bg-blue-50' : 'hover:bg-slate-50'}`}>
-                <td className="px-6 py-2 text-slate-400">{row.No}</td>
-                <td className="px-6 py-2 text-blue-700 font-bold whitespace-nowrap bg-blue-50/50">{row.Tahun || '-'}</td>
+              <tr key={index} className={`transition-colors group ${isEditing ? 'bg-surface-variant/40' : 'hover:bg-surface-variant/20'}`}>
+                <td className="py-5 px-6 font-sans text-sm text-on-surface-variant">{row.No}</td>
+                <td className="py-5 px-6 font-sans text-base text-primary font-bold">{row.Tahun || '-'}</td>
+                
                 {type === 'eWalidata' && (
                   <>
-                    <td className="px-6 py-2 whitespace-nowrap text-blue-600">
-                      {isEditing ? <input className="w-full px-2 py-1 border rounded" value={editFormData['Kode DSSD'] || ''} onChange={e => setEditFormData({...editFormData, 'Kode DSSD': e.target.value})} /> : row['Kode DSSD']}
+                    <td className="py-5 px-6 font-mono text-xs text-secondary tracking-widest whitespace-nowrap">
+                      {isEditing ? <input className="w-full px-2 py-1 border border-outline-variant rounded bg-surface text-on-surface focus:border-primary focus:outline-none" value={editFormData['Kode DSSD'] || ''} onChange={e => setEditFormData({...editFormData, 'Kode DSSD': e.target.value})} /> : <span className="bg-secondary/10 text-secondary px-2 py-1 rounded">{row['Kode DSSD']}</span>}
                     </td>
-                    <td className="px-6 py-2 text-slate-800 font-sans">
-                      {isEditing ? <input className="w-full px-2 py-1 border rounded" value={editFormData['Uraian DSSD'] || ''} onChange={e => setEditFormData({...editFormData, 'Uraian DSSD': e.target.value})} /> : row['Uraian DSSD']}
+                    <td className="py-5 px-6 font-sans text-sm text-on-surface">
+                      {isEditing ? <input className="w-full px-2 py-1 border border-outline-variant rounded bg-surface text-on-surface focus:border-primary focus:outline-none" value={editFormData['Uraian DSSD'] || ''} onChange={e => setEditFormData({...editFormData, 'Uraian DSSD': e.target.value})} /> : row['Uraian DSSD']}
                     </td>
-                    <td className="px-6 py-2">
-                      {isEditing ? <input className="w-full px-2 py-1 border rounded" value={editFormData.Satuan || ''} onChange={e => setEditFormData({...editFormData, Satuan: e.target.value})} /> : (
-                        <span className={`px-2 py-0.5 rounded ${
-                          row.Satuan?.toLowerCase().includes('laporan') ? 'bg-emerald-50 text-emerald-600' :
-                          row.Satuan?.toLowerCase().includes('dokumen') ? 'bg-blue-50 text-blue-600' :
-                          row.Satuan?.toLowerCase().includes('orang') ? 'bg-amber-50 text-amber-600' :
-                          'bg-slate-100 text-slate-600'
+                    <td className="py-5 px-6">
+                      {isEditing ? <input className="w-full px-2 py-1 border border-outline-variant rounded bg-surface text-on-surface focus:border-primary focus:outline-none" value={editFormData.Satuan || ''} onChange={e => setEditFormData({...editFormData, Satuan: e.target.value})} /> : (
+                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${
+                          row.Satuan?.toLowerCase().includes('laporan') ? 'bg-primary-container/20 text-primary-fixed border-primary/20' :
+                          row.Satuan?.toLowerCase().includes('dokumen') ? 'bg-tertiary-container/20 text-tertiary border-tertiary/20' :
+                          row.Satuan?.toLowerCase().includes('orang') ? 'bg-secondary-container/20 text-secondary border-secondary/20' :
+                          'bg-surface-variant/50 text-on-surface-variant border-outline-variant/30'
                         }`}>
                           {row.Satuan}
                         </span>
                       )}
                     </td>
-                    <td className="px-6 py-2 min-w-[300px] whitespace-normal font-sans text-slate-600 leading-relaxed">
-                      {isEditing ? <textarea className="w-full px-2 py-1 border rounded min-h-[60px]" value={editFormData['Definisi Operasional'] || ''} onChange={e => setEditFormData({...editFormData, 'Definisi Operasional': e.target.value})} /> : row['Definisi Operasional']}
+                    <td className="py-5 px-6 font-sans text-sm text-on-surface-variant min-w-[300px]">
+                      {isEditing ? <textarea className="w-full px-2 py-1 border border-outline-variant rounded bg-surface text-on-surface focus:border-primary focus:outline-none min-h-[60px]" value={editFormData['Definisi Operasional'] || ''} onChange={e => setEditFormData({...editFormData, 'Definisi Operasional': e.target.value})} /> : <div className="line-clamp-3" title={row['Definisi Operasional']}>{row['Definisi Operasional']}</div>}
                     </td>
-                    <td className="px-6 py-2 font-sans text-slate-600">
-                      {isEditing ? <input className="w-full px-2 py-1 border rounded" value={editFormData['Tag urusan'] || ''} onChange={e => setEditFormData({...editFormData, 'Tag urusan': e.target.value})} /> : row['Tag urusan']}
+                    <td className="py-5 px-6 font-sans text-sm text-on-surface-variant">
+                      {isEditing ? <input className="w-full px-2 py-1 border border-outline-variant rounded bg-surface text-on-surface focus:border-primary focus:outline-none" value={editFormData['Tag urusan'] || ''} onChange={e => setEditFormData({...editFormData, 'Tag urusan': e.target.value})} /> : row['Tag urusan']}
                     </td>
-                    <td className="px-6 py-2 font-sans text-slate-600">
-                      {isEditing ? <input className="w-full px-2 py-1 border rounded" value={editFormData['Produsen Data'] || ''} onChange={e => setEditFormData({...editFormData, 'Produsen Data': e.target.value})} /> : row['Produsen Data']}
+                    <td className="py-5 px-6 font-sans text-sm text-on-surface">
+                      {isEditing ? <input className="w-full px-2 py-1 border border-outline-variant rounded bg-surface text-on-surface focus:border-primary focus:outline-none" value={editFormData['Produsen Data'] || ''} onChange={e => setEditFormData({...editFormData, 'Produsen Data': e.target.value})} /> : row['Produsen Data']}
                     </td>
                   </>
                 )}
+                
                 {type === 'sektoral' && (
                   <>
-                    <td className="px-6 py-2 whitespace-nowrap text-blue-600">
-                      {isEditing ? <input className="w-full px-2 py-1 border rounded" value={editFormData['Kode Data'] || ''} onChange={e => setEditFormData({...editFormData, 'Kode Data': e.target.value})} /> : row['Kode Data']}
+                    <td className="py-5 px-6 font-mono text-xs text-secondary tracking-widest whitespace-nowrap">
+                      {isEditing ? <input className="w-full px-2 py-1 border border-outline-variant rounded bg-surface text-on-surface focus:border-primary focus:outline-none" value={editFormData['Kode Data'] || ''} onChange={e => setEditFormData({...editFormData, 'Kode Data': e.target.value})} /> : <span className="bg-secondary/10 text-secondary px-2 py-1 rounded">{row['Kode Data']}</span>}
                     </td>
-                    <td className="px-6 py-2 text-slate-800 font-sans">
-                      {isEditing ? <input className="w-full px-2 py-1 border rounded" value={editFormData['Uraian DSSD'] || ''} onChange={e => setEditFormData({...editFormData, 'Uraian DSSD': e.target.value})} /> : row['Uraian DSSD']}
+                    <td className="py-5 px-6 font-sans text-sm text-on-surface">
+                      {isEditing ? <input className="w-full px-2 py-1 border border-outline-variant rounded bg-surface text-on-surface focus:border-primary focus:outline-none" value={editFormData['Uraian DSSD'] || ''} onChange={e => setEditFormData({...editFormData, 'Uraian DSSD': e.target.value})} /> : row['Uraian DSSD']}
                     </td>
-                    <td className="px-6 py-2">
-                      {isEditing ? <input className="w-full px-2 py-1 border rounded" value={editFormData.Satuan || ''} onChange={e => setEditFormData({...editFormData, Satuan: e.target.value})} /> : (
-                        <span className={`px-2 py-0.5 rounded ${
-                          row.Satuan?.toLowerCase().includes('laporan') ? 'bg-emerald-50 text-emerald-600' :
-                          row.Satuan?.toLowerCase().includes('dokumen') ? 'bg-blue-50 text-blue-600' :
-                          row.Satuan?.toLowerCase().includes('orang') ? 'bg-amber-50 text-amber-600' :
-                          'bg-slate-100 text-slate-600'
+                    <td className="py-5 px-6">
+                      {isEditing ? <input className="w-full px-2 py-1 border border-outline-variant rounded bg-surface text-on-surface focus:border-primary focus:outline-none" value={editFormData.Satuan || ''} onChange={e => setEditFormData({...editFormData, Satuan: e.target.value})} /> : (
+                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${
+                          row.Satuan?.toLowerCase().includes('laporan') ? 'bg-primary-container/20 text-primary-fixed border-primary/20' :
+                          row.Satuan?.toLowerCase().includes('dokumen') ? 'bg-tertiary-container/20 text-tertiary border-tertiary/20' :
+                          row.Satuan?.toLowerCase().includes('orang') ? 'bg-secondary-container/20 text-secondary border-secondary/20' :
+                          'bg-surface-variant/50 text-on-surface-variant border-outline-variant/30'
                         }`}>
                           {row.Satuan}
                         </span>
                       )}
                     </td>
-                    <td className="px-6 py-2 min-w-[300px] whitespace-normal font-sans text-slate-600 leading-relaxed">
-                      {isEditing ? <textarea className="w-full px-2 py-1 border rounded min-h-[60px]" value={editFormData['Definisi Operasional'] || ''} onChange={e => setEditFormData({...editFormData, 'Definisi Operasional': e.target.value})} /> : row['Definisi Operasional']}
+                    <td className="py-5 px-6 font-sans text-sm text-on-surface-variant min-w-[300px]">
+                      {isEditing ? <textarea className="w-full px-2 py-1 border border-outline-variant rounded bg-surface text-on-surface focus:border-primary focus:outline-none min-h-[60px]" value={editFormData['Definisi Operasional'] || ''} onChange={e => setEditFormData({...editFormData, 'Definisi Operasional': e.target.value})} /> : <div className="line-clamp-3" title={row['Definisi Operasional']}>{row['Definisi Operasional']}</div>}
                     </td>
-                    <td className="px-6 py-2 font-sans text-slate-600">
-                      {isEditing ? <input className="w-full px-2 py-1 border rounded" value={editFormData['Tag urusan'] || ''} onChange={e => setEditFormData({...editFormData, 'Tag urusan': e.target.value})} /> : row['Tag urusan']}
+                    <td className="py-5 px-6 font-sans text-sm text-on-surface-variant">
+                      {isEditing ? <input className="w-full px-2 py-1 border border-outline-variant rounded bg-surface text-on-surface focus:border-primary focus:outline-none" value={editFormData['Tag urusan'] || ''} onChange={e => setEditFormData({...editFormData, 'Tag urusan': e.target.value})} /> : row['Tag urusan']}
                     </td>
-                    <td className="px-6 py-2 font-sans text-slate-600">
-                      {isEditing ? <input className="w-full px-2 py-1 border rounded" value={editFormData['Produsen Data'] || ''} onChange={e => setEditFormData({...editFormData, 'Produsen Data': e.target.value})} /> : row['Produsen Data']}
+                    <td className="py-5 px-6 font-sans text-sm text-on-surface">
+                      {isEditing ? <input className="w-full px-2 py-1 border border-outline-variant rounded bg-surface text-on-surface focus:border-primary focus:outline-none" value={editFormData['Produsen Data'] || ''} onChange={e => setEditFormData({...editFormData, 'Produsen Data': e.target.value})} /> : row['Produsen Data']}
                     </td>
-                    <td className="px-6 py-2 font-sans text-slate-600">
-                      {isEditing ? <input className="w-full px-2 py-1 border rounded" value={editFormData['Info Sub Kegiatan'] || ''} onChange={e => setEditFormData({...editFormData, 'Info Sub Kegiatan': e.target.value})} /> : row['Info Sub Kegiatan']}
+                    <td className="py-5 px-6 font-sans text-sm text-on-surface-variant">
+                      {isEditing ? <input className="w-full px-2 py-1 border border-outline-variant rounded bg-surface text-on-surface focus:border-primary focus:outline-none" value={editFormData['Info Sub Kegiatan'] || ''} onChange={e => setEditFormData({...editFormData, 'Info Sub Kegiatan': e.target.value})} /> : row['Info Sub Kegiatan']}
                     </td>
                   </>
                 )}
+                
                 {type === 'spasial' && (
                   <>
-                    <td className="px-6 py-2 whitespace-nowrap text-blue-600">
-                       {isEditing ? <input className="w-full px-2 py-1 border rounded" value={editFormData['Kode Data'] || ''} onChange={e => setEditFormData({...editFormData, 'Kode Data': e.target.value})} /> : row['Kode Data']}
+                    <td className="py-5 px-6 font-mono text-xs text-secondary tracking-widest whitespace-nowrap">
+                       {isEditing ? <input className="w-full px-2 py-1 border border-outline-variant rounded bg-surface text-on-surface focus:border-primary focus:outline-none" value={editFormData['Kode Data'] || ''} onChange={e => setEditFormData({...editFormData, 'Kode Data': e.target.value})} /> : <span className="bg-secondary/10 text-secondary px-2 py-1 rounded">{row['Kode Data']}</span>}
                     </td>
-                    <td className="px-6 py-2 text-slate-800 font-sans">
-                       {isEditing ? <input className="w-full px-2 py-1 border rounded" value={editFormData['Nama Informasi Geospasial'] || ''} onChange={e => setEditFormData({...editFormData, 'Nama Informasi Geospasial': e.target.value})} /> : row['Nama Informasi Geospasial']}
+                    <td className="py-5 px-6 font-sans text-sm text-on-surface">
+                       {isEditing ? <input className="w-full px-2 py-1 border border-outline-variant rounded bg-surface text-on-surface focus:border-primary focus:outline-none" value={editFormData['Nama Informasi Geospasial'] || ''} onChange={e => setEditFormData({...editFormData, 'Nama Informasi Geospasial': e.target.value})} /> : row['Nama Informasi Geospasial']}
                     </td>
-                    <td className="px-6 py-2 font-sans text-slate-600">
-                      {isEditing ? <input className="w-full px-2 py-1 border rounded" value={editFormData['Format penyimpanan data'] || editFormData['Format Penyimpanan Data'] || editFormData['Format penyimpanan'] || ''} onChange={e => setEditFormData({...editFormData, 'Format penyimpanan data': e.target.value})} /> : (
-                        <span className="px-2 py-0.5 rounded bg-purple-50 text-purple-600 font-medium">
+                    <td className="py-5 px-6 font-sans text-sm text-on-surface-variant">
+                      {isEditing ? <input className="w-full px-2 py-1 border border-outline-variant rounded bg-surface text-on-surface focus:border-primary focus:outline-none" value={editFormData['Format penyimpanan data'] || editFormData['Format Penyimpanan Data'] || editFormData['Format penyimpanan'] || ''} onChange={e => setEditFormData({...editFormData, 'Format penyimpanan data': e.target.value})} /> : (
+                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border bg-tertiary-container/20 text-tertiary border-tertiary/20 uppercase tracking-widest font-mono">
                           {row['Format penyimpanan data'] || row['Format Penyimpanan Data'] || row['Format penyimpanan'] || '-'}
                         </span>
                       )}
                     </td>
-                    <td className="px-6 py-2 font-sans text-slate-600">
-                      {isEditing ? <input className="w-full px-2 py-1 border rounded" value={editFormData['Skala'] || ''} onChange={e => setEditFormData({...editFormData, 'Skala': e.target.value})} /> : row['Skala']}
+                    <td className="py-5 px-6 font-sans text-sm text-on-surface-variant whitespace-nowrap">
+                      {isEditing ? <input className="w-full px-2 py-1 border border-outline-variant rounded bg-surface text-on-surface focus:border-primary focus:outline-none" value={editFormData['Skala'] || ''} onChange={e => setEditFormData({...editFormData, 'Skala': e.target.value})} /> : row['Skala']}
                     </td>
-                    <td className="px-6 py-2 font-sans text-slate-600">
-                      {isEditing ? <input className="w-full px-2 py-1 border rounded" value={editFormData['Produsen Data'] || ''} onChange={e => setEditFormData({...editFormData, 'Produsen Data': e.target.value})} /> : row['Produsen Data']}
+                    <td className="py-5 px-6 font-sans text-sm text-on-surface">
+                      {isEditing ? <input className="w-full px-2 py-1 border border-outline-variant rounded bg-surface text-on-surface focus:border-primary focus:outline-none" value={editFormData['Produsen Data'] || ''} onChange={e => setEditFormData({...editFormData, 'Produsen Data': e.target.value})} /> : row['Produsen Data']}
                     </td>
                   </>
                 )}
-                <td className="px-6 py-2 text-slate-500 font-sans text-xs whitespace-nowrap">
-                  {row._uploadTime || '-'}
+                <td className="py-5 px-6 font-sans text-sm text-on-surface-variant whitespace-nowrap">
+                  {row._uploadTime || '-'}<br/>
+                  {row._lastModified && <span className="text-[10px] opacity-60 block mt-0.5">Edit: {row._lastModified}</span>}
                 </td>
-                <td className="px-6 py-2 text-slate-500 font-sans text-xs whitespace-nowrap">
-                  {row._lastModified || '-'}
-                </td>
-                <td className="px-6 py-2 font-sans whitespace-nowrap">
+                
+                <td className="py-5 px-6 text-right whitespace-nowrap sticky right-0 bg-surface/40 backdrop-blur-sm group-hover:bg-surface-variant/40 transition-colors shadow-[-10px_0_15px_-5px_rgba(0,0,0,0.05)] border-l border-outline-variant/10">
                   {isEditing ? (
-                    <div className="flex gap-2">
-                      <button onClick={handleSaveEdit} className="p-1 bg-emerald-100 text-emerald-700 rounded hover:bg-emerald-200" title="Simpan">
-                        <Check size={16} />
+                    <div className="flex items-center justify-end gap-2">
+                      <button onClick={handleSaveEdit} className="w-8 h-8 rounded-full flex items-center justify-center text-primary hover:bg-primary/20 transition-colors" title="Simpan">
+                        <Check className="w-4 h-4" />
                       </button>
-                      <button onClick={handleCancelEdit} className="p-1 bg-red-100 text-red-700 rounded hover:bg-red-200" title="Batal">
-                        <XIcon size={16} />
+                      <button onClick={handleCancelEdit} className="w-8 h-8 rounded-full flex items-center justify-center text-error hover:bg-error/20 transition-colors" title="Batal">
+                        <XIcon className="w-4 h-4" />
                       </button>
                     </div>
                   ) : (
-                    <div className="flex gap-2">
-                      <button onClick={() => handleEditClick(row, globalIndex)} className="flex items-center gap-1 px-2 py-1 bg-slate-100 text-slate-600 rounded hover:bg-slate-200" title="Edit">
-                        <Edit2 size={14} /> Edit
+                    <div className="flex items-center justify-end gap-2 opacity-50 group-hover:opacity-100 transition-opacity">
+                      <button onClick={() => handleEditClick(row, globalIndex)} className="w-8 h-8 rounded-full flex items-center justify-center text-on-surface-variant hover:bg-surface-variant hover:text-primary transition-colors" title="Edit">
+                        <Edit2 className="w-4 h-4" />
                       </button>
                       <button onClick={() => {
                         if (window.confirm('Yakin ingin menghapus baris data ini?')) {
                           onDelete?.(row);
                         }
-                      }} className="flex items-center gap-1 px-2 py-1 bg-red-50 text-red-600 rounded hover:bg-red-100" title="Hapus">
-                        <Trash2 size={14} /> Hapus
+                      }} className="w-8 h-8 rounded-full flex items-center justify-center text-on-surface-variant hover:bg-error-container/20 hover:text-error transition-colors" title="Hapus">
+                        <Trash2 className="w-4 h-4" />
                       </button>
                     </div>
                   )}
@@ -221,8 +218,11 @@ export const DataTable: React.FC<DataTableProps> = ({ data, type, onEdit, onDele
             })}
             {currentRows.length === 0 && (
               <tr>
-                <td colSpan={10} className="px-6 py-8 text-center text-slate-500 font-sans">
-                  Tidak ada data untuk sheet ini.
+                <td colSpan={10} className="px-6 py-12 text-center text-on-surface-variant font-sans">
+                  <div className="flex flex-col items-center gap-2">
+                    <MoreHorizontal className="w-8 h-8 opacity-50" />
+                    <p>Tidak ada data untuk sheet ini.</p>
+                  </div>
                 </td>
               </tr>
             )}
@@ -230,27 +230,51 @@ export const DataTable: React.FC<DataTableProps> = ({ data, type, onEdit, onDele
         </table>
       </div>
       
-      {/* Pagination Controls */}
-      <div className="flex items-center justify-between px-6 py-3 bg-white border-t border-slate-200 mt-auto">
-        <div className="text-xs text-slate-500 font-sans">
-          Menampilkan <span className="font-semibold text-slate-700">{data.length > 0 ? indexOfFirstRow + 1 : 0}</span> hingga{' '}
-          <span className="font-semibold text-slate-700">{Math.min(indexOfLastRow, data.length)}</span> dari{' '}
-          <span className="font-semibold text-slate-700">{data.length}</span> data
-        </div>
-        <div className="flex space-x-1">
+      {/* Pagination */}
+      <div className="flex items-center justify-between px-6 py-4 border-t border-outline-variant/10 bg-surface-container-lowest/30">
+        <span className="font-sans text-sm text-on-surface-variant">
+          Menampilkan {data.length > 0 ? indexOfFirstRow + 1 : 0}-{Math.min(indexOfLastRow, data.length)} dari {data.length.toLocaleString('id-ID')} data
+        </span>
+        <div className="flex items-center gap-1">
           <button
             onClick={() => paginate(currentPage - 1)}
             disabled={currentPage <= 1}
-            className="p-1 border border-slate-200 rounded text-slate-500 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-slate-50"
+            className="w-8 h-8 rounded-lg flex items-center justify-center text-on-surface-variant hover:bg-surface-variant transition-colors disabled:opacity-20 disabled:cursor-not-allowed"
           >
-            <ChevronLeft size={16} />
+            <ChevronLeft className="w-5 h-5" />
           </button>
+          
+          <div className="flex items-center gap-1 mx-2">
+            {[...Array(Math.min(5, totalPages))].map((_, i) => {
+              let pageNum = currentPage;
+              if (currentPage < 3) pageNum = i + 1;
+              else if (currentPage > totalPages - 2) pageNum = totalPages - 4 + i;
+              else pageNum = currentPage - 2 + i;
+              
+              if (pageNum <= 0 || pageNum > totalPages) return null;
+              
+              return (
+                <button
+                  key={pageNum}
+                  onClick={() => paginate(pageNum)}
+                  className={`w-8 h-8 rounded-lg flex items-center justify-center font-sans text-sm transition-colors ${
+                    currentPage === pageNum 
+                      ? 'bg-primary text-on-primary font-bold shadow-[0_0_10px_rgba(56,189,248,0.3)]' 
+                      : 'text-on-surface hover:bg-surface-variant'
+                  }`}
+                >
+                  {pageNum}
+                </button>
+              );
+            })}
+          </div>
+          
           <button
             onClick={() => paginate(currentPage + 1)}
             disabled={currentPage >= totalPages}
-            className="p-1 border border-slate-200 rounded text-slate-500 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-slate-50"
+            className="w-8 h-8 rounded-lg flex items-center justify-center text-on-surface-variant hover:bg-surface-variant transition-colors disabled:opacity-20 disabled:cursor-not-allowed"
           >
-            <ChevronRight size={16} />
+            <ChevronRight className="w-5 h-5" />
           </button>
         </div>
       </div>
