@@ -4,13 +4,14 @@ import { AllData } from '../types';
 import { UploadCloud, AlertCircle } from 'lucide-react';
 
 interface FileUploadProps {
-  onDataLoaded: (data: AllData) => void;
+  onDataLoaded: (data: AllData, filename: string, year: string) => void;
 }
 
 export const FileUpload: React.FC<FileUploadProps> = ({ onDataLoaded }) => {
   const [isDragging, setIsDragging] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [selectedYear, setSelectedYear] = useState<string>(new Date().getFullYear().toString());
 
   const handleDragOver = useCallback((e: React.DragEvent) => {
     e.preventDefault();
@@ -66,7 +67,7 @@ export const FileUpload: React.FC<FileUploadProps> = ({ onDataLoaded }) => {
            return;
         }
 
-        onDataLoaded(allData);
+        onDataLoaded(allData, file.name, selectedYear);
         setIsLoading(false);
       } catch (err: any) {
         setError(`Terjadi kesalahan: ${err.message}`);
@@ -96,7 +97,19 @@ export const FileUpload: React.FC<FileUploadProps> = ({ onDataLoaded }) => {
   };
 
   return (
-    <div className="w-full max-w-2xl mx-auto">
+    <div className="w-full max-w-2xl mx-auto space-y-4">
+      <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex items-center justify-between">
+        <label className="text-sm font-medium text-slate-700">Tahun Data File yang Akan Diunggah:</label>
+        <select 
+          value={selectedYear}
+          onChange={(e) => setSelectedYear(e.target.value)}
+          className="px-3 py-1.5 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 font-medium"
+        >
+          {Array.from({length: 9}, (_, i) => 2022 + i).map(year => (
+            <option key={year} value={year}>{year}</option>
+          ))}
+        </select>
+      </div>
       <div 
         className={`flex flex-col items-center justify-center rounded-xl border-2 border-dashed px-6 py-16 transition-colors bg-white ${
           isDragging ? 'border-blue-500 bg-blue-50' : 'border-slate-300 hover:bg-slate-50'

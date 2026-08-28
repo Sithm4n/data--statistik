@@ -4,11 +4,15 @@ import {
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, Legend, ResponsiveContainer,
   PieChart, Pie, Cell
 } from 'recharts';
-import { Search } from 'lucide-react';
+import { Filter, Trash2, Search, Download, X } from 'lucide-react';
 import { DataTable } from './DataTable';
+import * as XLSX from 'xlsx';
 
 interface DashboardProps {
   data: AllData;
+  onEditRow: (tabType: keyof AllData, rowIndex: number, newRowData: any) => void;
+  onDeleteRow: (tabType: keyof AllData, row: any) => void;
+  onBulkDelete: (tabType: keyof AllData, filterKey: string, filterValue: string) => void;
 }
 
 const COLORS = ['#1e3a8a', '#1e40af', '#1d4ed8', '#2563eb', '#3b82f6']; // Blue shades from design
@@ -29,21 +33,109 @@ const renderCustomLabel = ({ cx, cy, midAngle, outerRadius, percent, value }: an
 
 type TabType = 'eWalidata' | 'sektoral' | 'spasial';
 
-export const Dashboard: React.FC<DashboardProps> = ({ data }) => {
+export const Dashboard: React.FC<DashboardProps> = ({ data, onEditRow, onDeleteRow, onBulkDelete }) => {
   const [activeTab, setActiveTab] = useState<TabType>('eWalidata');
   const [searchQuery, setSearchQuery] = useState('');
+  const [activeFilters, setActiveFilters] = useState<Record<string, string>>({});
+  const [showBulkDelete, setShowBulkDelete] = useState(false);
+  const [bulkDeleteKey, setBulkDeleteKey] = useState('');
+  const [bulkDeleteValue, setBulkDeleteValue] = useState('');
+
+  // Reset filters when tab changes
+  React.useEffect(() => {
+    setActiveFilters({});
+    setSearchQuery('');
+  }, [activeTab]);
+
+  const handleExport = () => {
+    const wb = XLSX.utils.book_new();
+    
+    const cleanForExport = (rows: any[]) => rows.map(r => {
+      const copy = { ...r };
+      delete copy._uploadId;
+      delete copy._originalIndex;
+      delete copy._uploadTime;
+      return copy;
+    });
+
+    const wsEWalidata = XLSX.utils.json_to_sheet(cleanForExport(data.eWalidata));
+    const wsSektoral = XLSX.utils.json_to_sheet(cleanForExport(data.sektoral));
+    const wsSpasial = XLSX.utils.json_to_sheet(cleanForExport(data.spasial));
+
+    XLSX.utils.book_append_sheet(wb, wsEWalidata, 'e-Walidata');
+    XLSX.utils.book_append_sheet(wb, wsSektoral, 'Data Sektoral');
+    XLSX.utils.book_append_sheet(wb, wsSpasial, 'Data Spasial');
+
+    const now = new Date();
+    const dateStr = `${now.getFullYear()}${(now.getMonth()+1).toString().padStart(2, '0')}${now.getDate().toString().padStart(2, '0')}`;
+    const timeStr = `${now.getHours().toString().padStart(2, '0')}${now.getMinutes().toString().padStart(2, '0')}`;
+    const filename = `Data_Statistik_Export_${dateStr}_${timeStr}.xlsx`;
+
+    XLSX.writeFile(wb, filename);
+  };
 
   const rawData = data[activeTab];
 
+  const filterOptions = useMemo(() => {
+    const options: Record<string, Set<string>> = {
+      'Tahun': new Set(),
+      'Produsen Data': new Set(),
+    };
+    if (activeTab === 'eWalidata' || activeTab === 'sektoral') {
+      options['Satuan'] = new Set();
+      options['Tag urusan'] = new Set();
+    }
+    if (activeTab === 'spasial') {
+      options['Format Penyimpanan Data'] = new Set();
+    }
+    
+    rawData.forEach(row => {
+      if (row['Tahun']) options['Tahun'].add(String(row['Tahun']));
+      if (row['Produsen Data']) options['Produsen Data'].add(String(row['Produsen Data']));
+      
+      if (activeTab !== 'spasial') {
+        if (row['Satuan']) options['Satuan'].add(String(row['Satuan']));
+        if (row['Tag urusan']) options['Tag urusan'].add(String(row['Tag urusan']));
+      } else {
+        const format = row['Format penyimpanan data'] || row['Format Penyimpanan Data'] || row['Format penyimpanan'];
+        if (format) options['Format Penyimpanan Data'].add(String(format));
+      }
+    });
+    
+    return Object.entries(options).reduce((acc, [key, set]) => {
+      acc[key] = Array.from(set).filter(Boolean).sort();
+      return acc;
+    }, {} as Record<string, string[]>);
+  }, [rawData, activeTab]);
+
   const currentData = useMemo(() => {
-    if (!searchQuery.trim()) return rawData;
-    const query = searchQuery.toLowerCase();
-    return rawData.filter((row: any) => 
-      Object.values(row).some(val => 
-        val && String(val).toLowerCase().includes(query)
-      )
-    );
-  }, [rawData, searchQuery]);
+    let filtered = rawData;
+
+    // Apply specific column filters
+    for (const [key, value] of Object.entries(activeFilters)) {
+      if (!value) continue;
+      
+      filtered = filtered.filter((row: any) => {
+        if (key === 'Format Penyimpanan Data' && activeTab === 'spasial') {
+          const format = row['Format penyimpanan data'] || row['Format Penyimpanan Data'] || row['Format penyimpanan'];
+          return String(format) === value;
+        }
+        return String(row[key]) === value;
+      });
+    }
+
+    // Apply global search
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase();
+      filtered = filtered.filter((row: any) => 
+        Object.values(row).some(val => 
+          val && String(val).toLowerCase().includes(query)
+        )
+      );
+    }
+
+    return filtered;
+  }, [rawData, searchQuery, activeFilters, activeTab]);
 
   // Aggregate data for charts based on active tab
   const satuanData = useMemo(() => {
@@ -117,7 +209,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ data }) => {
                 : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/50'
             }`}
           >
-            e-Walidata ({data.eWalidata.length})
+            e-Walidata ({data.eWalidata.length.toLocaleString()})
           </button>
           <button
             onClick={() => setActiveTab('sektoral')}
@@ -127,7 +219,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ data }) => {
                 : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/50'
             }`}
           >
-            Sektoral ({data.sektoral.length})
+            Sektoral ({data.sektoral.length.toLocaleString()})
           </button>
           <button
             onClick={() => setActiveTab('spasial')}
@@ -137,24 +229,144 @@ export const Dashboard: React.FC<DashboardProps> = ({ data }) => {
                 : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/50'
             }`}
           >
-            Spasial ({data.spasial.length})
+            Spasial ({data.spasial.length.toLocaleString()})
           </button>
         </div>
 
-        {/* Search Bar */}
-        <div className="relative w-full sm:w-80">
-          <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-            <Search className="h-4 w-4 text-slate-400" />
+        {/* Search Bar and Actions */}
+        <div className="flex items-center gap-3 w-full sm:w-auto">
+          <div className="relative w-full sm:w-64">
+            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+              <Search className="h-4 w-4 text-slate-400" />
+            </div>
+            <input
+              type="text"
+              placeholder={`Cari di data ${activeTab}...`}
+              className="block w-full pl-10 pr-3 py-2 border border-slate-200 rounded-lg leading-5 bg-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 sm:text-sm transition-colors shadow-sm"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
           </div>
-          <input
-            type="text"
-            placeholder={`Cari di data ${activeTab}...`}
-            className="block w-full pl-10 pr-3 py-2 border border-slate-200 rounded-lg leading-5 bg-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 sm:text-sm transition-colors shadow-sm"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-          />
+          <button
+            onClick={() => setShowBulkDelete(true)}
+            className="flex items-center gap-2 bg-red-50 text-red-600 border border-red-200 px-4 py-2 rounded-lg text-sm font-medium hover:bg-red-100 transition-colors shadow-sm whitespace-nowrap"
+          >
+            <Trash2 className="w-4 h-4" />
+            Hapus Massal
+          </button>
+          <button
+            onClick={handleExport}
+            className="flex items-center gap-2 bg-emerald-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-emerald-700 transition-colors shadow-sm whitespace-nowrap"
+          >
+            <Download className="w-4 h-4" />
+            Ekspor Excel
+          </button>
         </div>
       </div>
+
+      {/* Filter Options */}
+      <div className="flex flex-wrap items-center gap-3 p-4 bg-white border border-slate-200 rounded-xl shadow-sm">
+        <div className="flex items-center gap-2 text-sm font-medium text-slate-600 mr-2">
+          <Filter className="w-4 h-4" />
+          Filter:
+        </div>
+        {Object.entries(filterOptions).map(([key, options]) => (
+          <div key={key} className="flex flex-col">
+            <select
+              value={activeFilters[key] || ''}
+              onChange={(e) => setActiveFilters(prev => ({ ...prev, [key]: e.target.value }))}
+              className="block w-40 text-sm border-slate-200 rounded-lg bg-slate-50 border py-1.5 px-3 text-slate-700 focus:ring-blue-500 focus:border-blue-500"
+            >
+              <option value="">Semua {key}</option>
+              {options.map(opt => (
+                <option key={opt} value={opt}>{opt}</option>
+              ))}
+            </select>
+          </div>
+        ))}
+        {Object.values(activeFilters).some(Boolean) && (
+          <button
+            onClick={() => setActiveFilters({})}
+            className="text-sm text-blue-600 hover:text-blue-700 font-medium px-2 py-1"
+          >
+            Reset Filter
+          </button>
+        )}
+      </div>
+
+      {/* Bulk Delete Modal */}
+      {showBulkDelete && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm">
+          <div className="bg-white rounded-xl shadow-xl max-w-md w-full overflow-hidden animate-in zoom-in duration-200">
+            <div className="px-6 py-4 border-b border-slate-200 flex items-center justify-between">
+              <h3 className="text-lg font-bold text-slate-800">Hapus Data Massal</h3>
+              <button onClick={() => setShowBulkDelete(false)} className="text-slate-400 hover:text-slate-600">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <div className="p-6 space-y-4">
+              <p className="text-sm text-slate-600">
+                Pilih kolom dan nilai untuk menghapus semua data yang sesuai di sheet <strong>{activeTab}</strong>.
+              </p>
+              
+              <div className="space-y-3">
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-1">Berdasarkan Kolom</label>
+                  <select
+                    value={bulkDeleteKey}
+                    onChange={(e) => {
+                      setBulkDeleteKey(e.target.value);
+                      setBulkDeleteValue('');
+                    }}
+                    className="block w-full border-slate-300 rounded-lg bg-white border py-2 px-3 text-slate-700 focus:ring-red-500 focus:border-red-500"
+                  >
+                    <option value="">-- Pilih Kolom --</option>
+                    {Object.keys(filterOptions).map(key => (
+                      <option key={key} value={key}>{key}</option>
+                    ))}
+                  </select>
+                </div>
+                
+                {bulkDeleteKey && (
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700 mb-1">Nilai yang akan dihapus</label>
+                    <select
+                      value={bulkDeleteValue}
+                      onChange={(e) => setBulkDeleteValue(e.target.value)}
+                      className="block w-full border-slate-300 rounded-lg bg-white border py-2 px-3 text-slate-700 focus:ring-red-500 focus:border-red-500"
+                    >
+                      <option value="">-- Pilih Nilai --</option>
+                      {filterOptions[bulkDeleteKey]?.map(opt => (
+                        <option key={opt} value={opt}>{opt}</option>
+                      ))}
+                    </select>
+                  </div>
+                )}
+              </div>
+            </div>
+            <div className="px-6 py-4 bg-slate-50 border-t border-slate-200 flex justify-end gap-3">
+              <button
+                onClick={() => setShowBulkDelete(false)}
+                className="px-4 py-2 text-sm font-medium text-slate-600 hover:text-slate-900 bg-white border border-slate-300 rounded-lg hover:bg-slate-50"
+              >
+                Batal
+              </button>
+              <button
+                disabled={!bulkDeleteKey || !bulkDeleteValue}
+                onClick={() => {
+                  onBulkDelete(activeTab, bulkDeleteKey, bulkDeleteValue);
+                  setShowBulkDelete(false);
+                  setBulkDeleteKey('');
+                  setBulkDeleteValue('');
+                }}
+                className="px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-lg hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed shadow-sm"
+              >
+                Hapus Data
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Summary Cards */}
       <div className="grid grid-cols-4 gap-4">
@@ -169,27 +381,32 @@ export const Dashboard: React.FC<DashboardProps> = ({ data }) => {
             <div className="bg-white p-5 border border-slate-200 rounded-xl shadow-sm">
               <div className="text-slate-400 text-xs font-semibold uppercase mb-1 tracking-wider">Total Laporan</div>
               <div className="text-2xl font-bold text-slate-800">{totalLaporan.toLocaleString()}</div>
-              <div className="text-xs text-slate-400 mt-1">Dalam dataset</div>
+              <div className="text-xs text-slate-400 mt-1">Berdasarkan satuan Laporan</div>
             </div>
 
             <div className="bg-white p-5 border border-slate-200 rounded-xl shadow-sm">
               <div className="text-slate-400 text-xs font-semibold uppercase mb-1 tracking-wider">Total Dokumen</div>
               <div className="text-2xl font-bold text-slate-800">{totalDokumen.toLocaleString()}</div>
-              <div className="text-xs text-slate-400 mt-1">Dalam dataset</div>
+              <div className="text-xs text-slate-400 mt-1">Berdasarkan satuan Dokumen</div>
             </div>
 
             <div className="bg-white p-5 border border-slate-200 rounded-xl shadow-sm">
               <div className="text-slate-400 text-xs font-semibold uppercase mb-1 tracking-wider">Total Orang</div>
               <div className="text-2xl font-bold text-slate-800">{totalOrang.toLocaleString()}</div>
-              <div className="text-xs text-slate-400 mt-1">Dalam dataset</div>
+              <div className="text-xs text-slate-400 mt-1">Berdasarkan satuan Orang</div>
             </div>
           </>
         ) : (
           <>
-            <div className="bg-white p-5 border border-slate-200 rounded-xl shadow-sm col-span-3">
-              <div className="text-slate-400 text-xs font-semibold uppercase mb-1 tracking-wider">Format Penyimpanan Terbanyak</div>
-              <div className="text-2xl font-bold text-slate-800">{formatSpasialData[0]?.name || '-'}</div>
-              <div className="text-xs text-slate-400 mt-1">{formatSpasialData[0]?.value || 0} file dengan format ini</div>
+            <div className="col-span-3 bg-white p-5 border border-slate-200 rounded-xl shadow-sm flex items-center justify-between">
+              <div>
+                <div className="text-slate-400 text-xs font-semibold uppercase mb-1 tracking-wider">Format Penyimpanan Terbanyak</div>
+                <div className="text-2xl font-bold text-slate-800">{formatSpasialData[0]?.name || '-'}</div>
+                <div className="text-sm text-slate-500 mt-1">{formatSpasialData[0]?.value || 0} file menggunakan format ini</div>
+              </div>
+              <div className="h-16 w-16 bg-blue-50 rounded-full flex items-center justify-center">
+                <span className="text-blue-600 font-bold text-xl">{Math.round(((formatSpasialData[0]?.value || 0) / currentData.length) * 100 || 0)}%</span>
+              </div>
             </div>
           </>
         )}
@@ -274,7 +491,12 @@ export const Dashboard: React.FC<DashboardProps> = ({ data }) => {
       </div>
 
       {/* Data Table */}
-      <DataTable data={currentData} type={activeTab} />
+      <DataTable 
+        data={currentData} 
+        type={activeTab} 
+        onEdit={(rowIndex, newRowData) => onEditRow(activeTab, rowIndex, newRowData)} 
+        onDelete={(row) => onDeleteRow(activeTab, row)}
+      />
     </div>
   );
 };
