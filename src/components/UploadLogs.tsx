@@ -1,6 +1,7 @@
 import React from 'react';
 import { UploadRecord } from '../types';
 import { FileSpreadsheet, Trash2, CheckCircle2, Inbox, RefreshCw, XCircle, Download } from 'lucide-react';
+import * as XLSX from 'xlsx';
 
 interface UploadLogsProps {
   uploads: UploadRecord[];
@@ -13,6 +14,52 @@ export const UploadLogs: React.FC<UploadLogsProps> = ({ uploads, onDeleteUpload 
   const successCount = uploads.length;
   const processingCount = 0;
   const failedCount = 0;
+
+  const handleDownload = (upload: UploadRecord) => {
+    try {
+      const workbook = XLSX.utils.book_new();
+
+      // Helper function to remove internal fields
+      const cleanDataForExport = (dataArray: any[]) => {
+        return dataArray.map(item => {
+          const cleaned = { ...item };
+          // Remove internal tracking fields before export
+          delete cleaned._lastModified;
+          delete cleaned._uploadTime;
+          delete cleaned._uploadId;
+          delete cleaned._originalIndex;
+          delete cleaned._rowId;
+          return cleaned;
+        });
+      };
+
+      if (upload.data.eWalidata && upload.data.eWalidata.length > 0) {
+        const wsEWalidata = XLSX.utils.json_to_sheet(cleanDataForExport(upload.data.eWalidata));
+        XLSX.utils.book_append_sheet(workbook, wsEWalidata, 'eWalidata');
+      }
+      
+      if (upload.data.sektoral && upload.data.sektoral.length > 0) {
+        const wsSektoral = XLSX.utils.json_to_sheet(cleanDataForExport(upload.data.sektoral));
+        XLSX.utils.book_append_sheet(workbook, wsSektoral, 'Sektoral');
+      }
+
+      if (upload.data.spasial && upload.data.spasial.length > 0) {
+        const wsSpasial = XLSX.utils.json_to_sheet(cleanDataForExport(upload.data.spasial));
+        XLSX.utils.book_append_sheet(workbook, wsSpasial, 'Spasial');
+      }
+
+      // If workbook is completely empty (no sheets added), add an empty sheet to prevent errors
+      if (workbook.SheetNames.length === 0) {
+        const wsEmpty = XLSX.utils.json_to_sheet([{ "Info": "Tidak ada data" }]);
+        XLSX.utils.book_append_sheet(workbook, wsEmpty, 'Data');
+      }
+
+      XLSX.writeFile(workbook, upload.filename);
+    } catch (error) {
+      console.error('Failed to export data:', error);
+      alert('Terjadi kesalahan saat mengunduh file.');
+    }
+  };
 
   return (
     <div className="flex flex-col w-full px-8 py-12 gap-8 relative overflow-hidden min-h-[calc(100vh-5rem)]">
@@ -125,7 +172,11 @@ export const UploadLogs: React.FC<UploadLogsProps> = ({ uploads, onDeleteUpload 
                   </td>
                   <td className="px-6 py-4">
                     <div className="flex items-center justify-center gap-2 opacity-50 group-hover:opacity-100 transition-opacity">
-                      <button className="w-8 h-8 rounded-full flex items-center justify-center hover:bg-surface-variant/50 text-on-surface-variant hover:text-on-surface transition-colors" title="Download">
+                      <button 
+                        onClick={() => handleDownload(upload)}
+                        className="w-8 h-8 rounded-full flex items-center justify-center hover:bg-surface-variant/50 text-on-surface-variant hover:text-primary transition-colors" 
+                        title="Download"
+                      >
                         <Download className="w-4 h-4" />
                       </button>
                       <button 

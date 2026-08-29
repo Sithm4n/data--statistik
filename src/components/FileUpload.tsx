@@ -98,42 +98,42 @@ export const FileUpload: React.FC<FileUploadProps> = ({ onDataLoaded }) => {
 
   return (
     <div className="w-full max-w-2xl mx-auto space-y-4">
-      <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex items-center justify-between">
-        <label className="text-sm font-medium text-slate-700">Tahun Data File yang Akan Diunggah:</label>
+      <div className="bg-surface-container-low/40 backdrop-blur-xl p-4 rounded-2xl border border-primary/20 flex items-center justify-between">
+        <label className="text-sm font-medium text-on-surface-variant">Tahun Data File yang Akan Diunggah:</label>
         <select 
           value={selectedYear}
           onChange={(e) => setSelectedYear(e.target.value)}
-          className="px-3 py-1.5 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 font-medium"
+          className="px-3 py-1.5 bg-surface-container-highest/50 border border-outline-variant/30 rounded-xl text-on-surface focus:outline-none focus:border-primary/50 transition-colors font-medium appearance-none bg-[url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2224%22%20height%3D%2224%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23ccc3d8%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpolyline%20points%3D%226%209%2012%2015%2018%209%22%3E%3C%2Fpolyline%3E%3C%2Fsvg%3E')] bg-[length:1.2em_1.2em] bg-[right_0.5rem_center] bg-no-repeat cursor-pointer pr-8"
         >
           {Array.from({length: 9}, (_, i) => 2022 + i).map(year => (
-            <option key={year} value={year}>{year}</option>
+            <option key={year} value={year} className="bg-[#1a1d21] text-white">{year}</option>
           ))}
         </select>
       </div>
       <div 
-        className={`flex flex-col items-center justify-center rounded-xl border-2 border-dashed px-6 py-16 transition-colors bg-white ${
-          isDragging ? 'border-blue-500 bg-blue-50' : 'border-slate-300 hover:bg-slate-50'
+        className={`flex flex-col items-center justify-center rounded-2xl border border-dashed px-6 py-16 transition-all duration-300 backdrop-blur-xl ${
+          isDragging ? 'border-primary bg-primary/10' : 'border-outline-variant/30 bg-surface-container-low/40 hover:bg-surface-container/60 hover:border-primary/50'
         }`}
         onDragOver={handleDragOver}
         onDragLeave={handleDragLeave}
         onDrop={handleDrop}
       >
-        <UploadCloud className="mx-auto h-10 w-10 text-slate-400 mb-4" aria-hidden="true" />
-        <div className="flex text-sm leading-6 text-slate-600 justify-center">
+        <UploadCloud className={`mx-auto h-12 w-12 mb-4 transition-colors ${isDragging ? 'text-primary' : 'text-on-surface-variant'}`} aria-hidden="true" />
+        <div className="flex text-base leading-6 text-on-surface-variant justify-center font-medium">
           <label
             htmlFor="file-upload"
-            className="relative cursor-pointer rounded bg-white font-semibold text-blue-600 focus-within:outline-none focus-within:ring-2 focus-within:ring-blue-600 focus-within:ring-offset-2 hover:text-blue-500"
+            className="relative cursor-pointer rounded bg-transparent font-bold text-primary focus-within:outline-none focus-within:ring-2 focus-within:ring-primary focus-within:ring-offset-2 focus-within:ring-offset-surface hover:text-primary-fixed transition-colors"
           >
             <span>Unggah file Excel</span>
             <input id="file-upload" name="file-upload" type="file" accept=".xlsx,.xls" className="sr-only" onChange={handleFileInput} />
           </label>
-          <p className="pl-1">atau seret dan lepas ke sini</p>
+          <p className="pl-2">atau seret dan lepas ke sini</p>
         </div>
-        <p className="text-xs leading-5 text-slate-400 mt-2">Mendukung file dengan 3 Sheet: e-Walidata, Sektoral, Spasial (.xlsx)</p>
+        <p className="text-sm leading-5 text-on-surface-variant/70 mt-3 font-mono">Mendukung file dengan 3 Sheet: e-Walidata, Sektoral, Spasial (.xlsx)</p>
         
         {isLoading && (
-          <div className="mt-4 flex items-center justify-center text-xs text-blue-600 font-semibold uppercase tracking-wider">
-            <svg className="animate-spin -ml-1 mr-2 h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+          <div className="mt-6 flex items-center justify-center text-sm text-primary font-bold uppercase tracking-wider font-mono">
+            <svg className="animate-spin -ml-1 mr-3 h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
               <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
               <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
             </svg>
@@ -143,42 +143,45 @@ export const FileUpload: React.FC<FileUploadProps> = ({ onDataLoaded }) => {
       </div>
 
       {error && (
-        <div className="mt-4 p-4 bg-red-50 rounded-lg flex items-start border border-red-100">
-          <AlertCircle className="h-5 w-5 text-red-500 mt-0.5 mr-3 flex-shrink-0" />
-          <p className="text-sm text-red-700 font-medium">{error}</p>
+        <div className="mt-4 p-4 bg-error-container/20 backdrop-blur-md rounded-2xl flex items-start border border-error/30">
+          <AlertCircle className="h-5 w-5 text-error mt-0.5 mr-3 flex-shrink-0" />
+          <p className="text-sm text-error font-medium">{error}</p>
         </div>
       )}
 
-      <div className="mt-6 bg-slate-50 rounded-xl p-6 border border-slate-200 shadow-sm">
-        <h2 className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-4">Panduan Format Data</h2>
-        <p className="text-sm text-slate-600 mb-3">Pastikan file Excel memiliki 3 Sheet dengan struktur Header berikut:</p>
+      <div className="mt-6 bg-surface-container-low/30 backdrop-blur-xl rounded-2xl p-6 border border-primary/20 shadow-sm">
+        <h2 className="text-xs font-bold text-on-surface-variant uppercase tracking-widest mb-4 font-mono flex items-center gap-2">
+          <div className="w-1.5 h-1.5 rounded-full bg-primary"></div>
+          Panduan Format Data
+        </h2>
+        <p className="text-sm text-on-surface mb-4">Pastikan file Excel memiliki 3 Sheet dengan struktur Header berikut:</p>
         
-        <div className="space-y-4">
-          <div>
-            <span className="text-xs font-semibold text-blue-600 uppercase tracking-wider block mb-2">1. e-Walidata</span>
+        <div className="space-y-6">
+          <div className="bg-surface-container/40 p-4 rounded-xl border border-outline-variant/10">
+            <span className="text-xs font-bold text-primary uppercase tracking-widest block mb-3 font-mono">1. e-Walidata</span>
             <div className="flex flex-wrap gap-2">
               {['No', 'Kode DSSD', 'Uraian DSSD', 'Satuan', 'Definisi Operasional', 'Tag urusan', 'Produsen Data'].map(header => (
-                <span key={header} className="bg-white px-2 py-1 rounded text-xs font-mono text-slate-600 border border-slate-200">
+                <span key={header} className="bg-surface px-2.5 py-1.5 rounded-lg text-xs font-mono text-on-surface-variant border border-outline-variant/20 shadow-sm">
                   {header}
                 </span>
               ))}
             </div>
           </div>
-          <div>
-             <span className="text-xs font-semibold text-emerald-600 uppercase tracking-wider block mb-2">2. Data Sektoral</span>
+          <div className="bg-surface-container/40 p-4 rounded-xl border border-outline-variant/10">
+             <span className="text-xs font-bold text-tertiary uppercase tracking-widest block mb-3 font-mono">2. Data Sektoral</span>
              <div className="flex flex-wrap gap-2">
               {['No', 'Kode Data', 'Uraian DSSD', 'Satuan', 'Definisi Operasional', 'Tag urusan', 'Produsen Data', 'Info Sub Kegiatan'].map(header => (
-                <span key={header} className="bg-white px-2 py-1 rounded text-xs font-mono text-slate-600 border border-slate-200">
+                <span key={header} className="bg-surface px-2.5 py-1.5 rounded-lg text-xs font-mono text-on-surface-variant border border-outline-variant/20 shadow-sm">
                   {header}
                 </span>
               ))}
             </div>
           </div>
-          <div>
-            <span className="text-xs font-semibold text-amber-600 uppercase tracking-wider block mb-2">3. Data Spasial</span>
+          <div className="bg-surface-container/40 p-4 rounded-xl border border-outline-variant/10">
+            <span className="text-xs font-bold text-secondary uppercase tracking-widest block mb-3 font-mono">3. Data Spasial</span>
             <div className="flex flex-wrap gap-2">
               {['No', 'Kode Data', 'Nama Informasi Geospasial', 'Format penyimpanan', 'Skala', 'Produsen Data'].map(header => (
-                <span key={header} className="bg-white px-2 py-1 rounded text-xs font-mono text-slate-600 border border-slate-200">
+                <span key={header} className="bg-surface px-2.5 py-1.5 rounded-lg text-xs font-mono text-on-surface-variant border border-outline-variant/20 shadow-sm">
                   {header}
                 </span>
               ))}

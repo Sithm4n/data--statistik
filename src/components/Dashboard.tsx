@@ -277,9 +277,9 @@ export const Dashboard: React.FC<DashboardProps> = ({ data, onEditRow, onDeleteR
                 onChange={(e) => setActiveFilters(prev => ({ ...prev, [key]: e.target.value }))}
                 className="appearance-none bg-surface-variant/20 border border-outline-variant/20 text-on-surface rounded-lg px-4 py-2 pr-10 focus:outline-none focus:border-primary/50 transition-colors bg-[url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2224%22%20height%3D%2224%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23ccc3d8%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpolyline%20points%3D%226%209%2012%2015%2018%209%22%3E%3C%2Fpolyline%3E%3C%2Fsvg%3E')] bg-[length:1.2em_1.2em] bg-[right_0.5rem_center] bg-no-repeat cursor-pointer max-w-xs"
               >
-                <option value="">Semua {key}</option>
+                <option className="bg-[#1a1d21] text-white" value="">Semua {key}</option>
                 {options.map(opt => (
-                  <option key={opt} value={opt}>{opt}</option>
+                  <option className="bg-[#1a1d21] text-white" key={opt} value={opt}>{opt}</option>
                 ))}
               </select>
             ))}
