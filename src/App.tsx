@@ -1,13 +1,14 @@
 import React, { useState, useMemo } from 'react';
-import { LayoutDashboard, Clock, Plus, Database, Search, Bell, BarChart2, User } from 'lucide-react';
+import { LayoutDashboard, Clock, Plus, Database, Search, Bell, BarChart2, User, Printer } from 'lucide-react';
 import { FileUpload } from './components/FileUpload';
 import { Dashboard } from './components/Dashboard';
 import { UploadLogs } from './components/UploadLogs';
+import { PrintDocument } from './components/PrintDocument';
 import { AllData, UploadRecord } from './types';
 
 export default function App() {
   const [uploads, setUploads] = useState<UploadRecord[]>([]);
-  const [currentView, setCurrentView] = useState<'upload' | 'dashboard' | 'logs'>('upload');
+  const [currentView, setCurrentView] = useState<'upload' | 'dashboard' | 'logs' | 'print'>('upload');
 
   const handleDataLoaded = (newData: AllData, filename: string, year: string) => {
     const processIncomingRows = (rows: any[]) => rows.map(r => ({ ...r, _rowId: Math.random().toString(36).substring(2, 9) }));
@@ -151,7 +152,7 @@ export default function App() {
   return (
     <div className="flex min-h-screen bg-background text-on-surface font-sans antialiased">
       {/* Sidebar */}
-      <aside className="fixed left-0 top-0 h-full w-72 bg-surface-container-low/40 backdrop-blur-2xl z-50 flex flex-col border-r border-primary/20 shadow-[20px_0_40px_rgba(0,0,0,0.2)]">
+      <aside className="fixed left-0 top-0 h-full w-72 bg-surface-container-low/40 backdrop-blur-2xl z-50 flex flex-col border-r border-primary/20 shadow-[20px_0_40px_rgba(0,0,0,0.2)] print:hidden">
         <div className="p-8 mb-4">
           <div className="flex items-center gap-3 bg-gradient-to-br from-primary to-tertiary bg-clip-text text-transparent">
             <BarChart2 className="w-8 h-8 text-primary" />
@@ -184,6 +185,18 @@ export default function App() {
           </button>
 
           <button
+            onClick={() => setCurrentView('print')}
+            className={`w-full flex items-center gap-4 px-6 py-4 rounded-xl transition-all duration-300 group ${
+              currentView === 'print'
+                ? 'bg-primary-container text-on-primary-container shadow-[0_0_15px_rgba(2,132,199,0.3)]'
+                : 'text-on-surface-variant hover:bg-surface-variant/30 hover:text-on-surface'
+            }`}
+          >
+            <Printer className="w-5 h-5 group-hover:scale-110 transition-transform" />
+            <span className="text-base font-medium">Cetak PDF</span>
+          </button>
+
+          <button
             onClick={() => setCurrentView('upload')}
             className={`w-full flex items-center gap-4 px-6 py-4 rounded-xl transition-all duration-300 group ${
               currentView === 'upload'
@@ -209,9 +222,9 @@ export default function App() {
       </aside>
 
       {/* Main Content Area */}
-      <div className="pl-72 flex-1 flex flex-col w-full min-h-screen">
+      <div className="pl-72 flex-1 flex flex-col w-full min-h-screen print:pl-0">
         {/* Header */}
-        <header className="fixed top-0 left-72 right-0 h-20 bg-surface-dim/60 backdrop-blur-md z-40 flex items-center justify-between px-8 border-b border-primary/20 shadow-lg">
+        <header className="fixed top-0 left-72 right-0 h-20 bg-surface-dim/60 backdrop-blur-md z-40 flex items-center justify-between px-8 border-b border-primary/20 shadow-lg print:hidden">
           <div className="flex items-center gap-3">
             <span className="text-xl font-medium text-on-surface tracking-wide">Sistem Informasi Statistik</span>
           </div>
@@ -231,7 +244,7 @@ export default function App() {
         </header>
 
         {/* View Rendering */}
-        <main className="relative pt-20 flex-1 w-full overflow-x-hidden">
+        <main className="relative pt-20 flex-1 w-full overflow-x-hidden print:pt-0 print:overflow-visible">
           {currentView === 'upload' && (
             <div className="p-8 relative min-h-[calc(100vh-5rem)]">
               {/* Ambient Glows */}
@@ -279,7 +292,7 @@ export default function App() {
           )}
 
           {currentView === 'dashboard' && !aggregatedData && (
-            <div className="flex flex-col items-center justify-center h-full pt-32 text-on-surface-variant relative">
+            <div className="flex flex-col items-center justify-center h-full pt-32 text-on-surface-variant relative print:hidden">
               <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-primary/10 rounded-full blur-[120px] -z-10 mix-blend-screen pointer-events-none"></div>
               <Database className="w-16 h-16 opacity-30 mb-4" />
               <p className="text-lg">Belum ada data yang diunggah.</p>
@@ -290,6 +303,10 @@ export default function App() {
                 Mulai Unggah Data
               </button>
             </div>
+          )}
+
+          {currentView === 'print' && (
+            <PrintDocument data={aggregatedData} uploads={uploads} />
           )}
         </main>
       </div>
