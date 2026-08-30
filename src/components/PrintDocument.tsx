@@ -11,6 +11,19 @@ export const PrintDocument: React.FC<PrintDocumentProps> = ({ data, uploads }) =
   const [selectedProdusen, setSelectedProdusen] = useState<string>('');
   const [selectedYears, setSelectedYears] = useState<string[]>([]);
   
+  const numberToWordsID = (num: number): string => {
+    const words = ["", "Satu", "Dua", "Tiga", "Empat", "Lima", "Enam", "Tujuh", "Delapan", "Sembilan", "Sepuluh", "Sebelas"];
+    let result = "";
+    if (num < 12) result = words[num];
+    else if (num < 20) result = words[num - 10] + " Belas";
+    else if (num < 100) result = words[Math.floor(num / 10)] + " Puluh " + words[num % 10];
+    else if (num < 200) result = "Seratus " + numberToWordsID(num - 100);
+    else if (num < 1000) result = words[Math.floor(num / 100)] + " Ratus " + numberToWordsID(num % 100);
+    else if (num < 2000) result = "Seribu " + numberToWordsID(num - 1000);
+    else if (num < 1000000) result = numberToWordsID(Math.floor(num / 1000)) + " Ribu " + numberToWordsID(num % 1000);
+    return result.trim().replace(/\s+/g, ' ');
+  };
+  
   // Custom signatures state
   const [form, setForm] = useState({
     nomor: '500.14/      /35.07.315/2026',
@@ -238,32 +251,32 @@ export const PrintDocument: React.FC<PrintDocumentProps> = ({ data, uploads }) =
         <div className="w-[210mm] min-h-[297mm] mx-auto bg-white text-black shadow-2xl print:shadow-none print:mx-0 print:w-full print:[-webkit-print-color-adjust:exact] print:[color-adjust:exact]">
           
           {/* Page 1: Berita Acara */}
-          <div className="p-[20mm] print:page-break-after-always">
+          <div className="pt-[15mm] pb-[10mm] px-[20mm] print:page-break-after-always">
             {/* KOP Surat */}
-            <div className="flex items-center border-b-[3px] border-double border-black pb-4 mb-6">
-              <div className="w-[70px] h-[90px] flex items-center justify-center shrink-0">
+            <div className="flex items-center border-b-[3px] border-double border-black pb-3 mb-4">
+              <div className="w-[70px] h-[85px] flex items-center justify-center shrink-0">
                 <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/d/d9/Logo_Kabupaten_Malang_-_Seal_of_Malang_Regency.svg/500px-Logo_Kabupaten_Malang_-_Seal_of_Malang_Regency.svg.png" alt="Logo Kab Malang" className="max-w-full max-h-full object-contain" />
               </div>
-              <div className="flex-1 text-center font-serif">
-                <div className="text-xl">PEMERINTAH KABUPATEN MALANG</div>
-                <div className="text-2xl font-bold tracking-wide">DINAS KOMUNIKASI DAN INFORMATIKA</div>
-                <div className="text-sm">Jalan K.H. Agus Salim No. 7 Gedung J Lantai 3, Malang, Jawa Timur</div>
-                <div className="text-sm">Telepon/ Faksimile (0341) 408788 Laman : https://kominfo.malangkab.go.id</div>
-                <div className="text-sm">Pos-el : kominfo@malangkab.go.id, Kode Pos : 65119</div>
+              <div className="flex-1 text-center font-serif leading-[1.15]">
+                <div className="text-[14pt]">PEMERINTAH KABUPATEN MALANG</div>
+                <div className="text-[18pt] font-bold tracking-wide">DINAS KOMUNIKASI DAN INFORMATIKA</div>
+                <div className="text-[10pt]">Jalan K.H. Agus Salim No. 7 Gedung J Lantai 3, Malang, Jawa Timur</div>
+                <div className="text-[10pt]">Telepon/ Faksimile (0341) 408788 Laman : https://kominfo.malangkab.go.id</div>
+                <div className="text-[10pt]">Pos-el : kominfo@malangkab.go.id, Kode Pos : 65119</div>
               </div>
             </div>
 
             {/* Title */}
-            <div className="text-center font-bold mb-6 font-serif">
-              <div className="text-lg underline decoration-1 underline-offset-4 mb-1">BERITA ACARA</div>
-              <div className="text-base uppercase">DAFTAR DATA STATISTIK SEKTORAL DAERAH</div>
-              <div className="text-base uppercase">{selectedProdusen || '[NAMA PRODUSEN DATA]'}</div>
-              <div className="text-base uppercase">KABUPATEN MALANG</div>
-              <div className="text-sm font-normal">Nomor : {form.nomor}</div>
+            <div className="text-center font-bold mb-5 font-serif leading-[1.15]">
+              <div className="text-[14pt] underline decoration-1 underline-offset-4 mb-1">BERITA ACARA</div>
+              <div className="text-[12pt] uppercase">DAFTAR DATA STATISTIK SEKTORAL DAERAH</div>
+              <div className="text-[12pt] uppercase">{selectedProdusen || '[NAMA PRODUSEN DATA]'}</div>
+              <div className="text-[12pt] uppercase">KABUPATEN MALANG</div>
+              <div className="text-[12pt] font-normal mt-1">Nomor : {form.nomor}</div>
             </div>
 
             {/* Content */}
-            <div className="text-justify font-serif text-sm space-y-4 mb-10 leading-relaxed">
+            <div className="text-justify font-serif text-[12pt] space-y-2 mb-6 leading-[1.15]">
               <p className="indent-8">
                 Pada Hari ini, ..... tanggal ..... bulan ..... tahun ....., bertempat di Kabupaten Malang, 
                 dilaksanakan Penetapan Daftar Data Statistik Sektoral Daerah pada 
@@ -271,14 +284,14 @@ export const PrintDocument: React.FC<PrintDocumentProps> = ({ data, uploads }) =
                 dan disepakati empat hal sebagai berikut :
               </p>
 
-              <table className="w-full text-sm align-top">
+              <table className="w-full text-[12pt] align-top leading-[1.15]">
                 <tbody>
                   <tr>
                     <td className="w-24 pb-2">KESATU</td>
                     <td className="w-4 pb-2">:</td>
                     <td className="pb-2 text-justify">
                       Daftar Data sebagaimana terlampir pada Berita Acara ini, ditetapkan 
-                      sejumlah <strong>{totalDataCount} ({/* Need a number to words converter ideally, skipping for now */})</strong> Data Statistik Sektoral Daerah (DSSD).
+                      sejumlah <strong>{totalDataCount} ({numberToWordsID(totalDataCount)})</strong> Data Statistik Sektoral Daerah (DSSD).
                     </td>
                   </tr>
                   <tr>
@@ -312,15 +325,15 @@ export const PrintDocument: React.FC<PrintDocumentProps> = ({ data, uploads }) =
             </div>
 
             {/* Date & Signatures Grid */}
-            <div className="font-serif text-sm text-center">
-              <div className="mb-6">
+            <div className="font-serif text-[12pt] text-center leading-[1.15]">
+              <div className="mb-4">
                 Malang, {form.tanggalAcara}<br/>
                 Tim Pelaksana Satu Data Kabupaten Malang
               </div>
 
-              <div className="grid grid-cols-2 gap-8 mb-12">
+              <div className="grid grid-cols-2 gap-8 mb-6">
                 <div>
-                  <div className="font-bold mb-16">
+                  <div className="font-bold h-20">
                     Produsen Data,<br/>
                     {form.jabatanProdusen}<br/>
                     Kabupaten Malang
@@ -329,7 +342,7 @@ export const PrintDocument: React.FC<PrintDocumentProps> = ({ data, uploads }) =
                   <div>NIP. {form.nipProdusen}</div>
                 </div>
                 <div>
-                  <div className="font-bold mb-16">
+                  <div className="font-bold h-20">
                     Walidata,<br/>
                     Kepala Dinas Komunikasi dan Informatika<br/>
                     Kabupaten Malang
@@ -340,7 +353,7 @@ export const PrintDocument: React.FC<PrintDocumentProps> = ({ data, uploads }) =
               </div>
 
               <div className="w-1/2 mx-auto">
-                <div className="font-bold mb-16">
+                <div className="font-bold h-20">
                   Koordinator,<br/>
                   Kepala Badan Perencanaan Pembangunan Daerah<br/>
                   Kabupaten Malang
