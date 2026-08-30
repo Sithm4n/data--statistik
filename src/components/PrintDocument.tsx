@@ -106,6 +106,23 @@ export const PrintDocument: React.FC<PrintDocumentProps> = ({ data, uploads }) =
 
   return (
     <div className="flex flex-col w-full min-h-[calc(100vh-5rem)]">
+      <style>
+        {`
+          @media print {
+            @page {
+              margin: 0mm; /* Menghilangkan header/footer watermark dari browser */
+            }
+            body, html, #root {
+              background-color: white !important;
+              color: black !important;
+            }
+            /* Menghilangkan semua shadow dan background gelap dari root saat print */
+            * {
+              box-shadow: none !important;
+            }
+          }
+        `}
+      </style>
       
       {/* --- CONFIGURATION PANEL (Hidden on Print) --- */}
       <div className="print:hidden p-8 flex flex-col gap-6 border-b border-outline-variant/20 bg-surface-container-low/40 backdrop-blur-xl relative z-20">
@@ -248,7 +265,10 @@ export const PrintDocument: React.FC<PrintDocumentProps> = ({ data, uploads }) =
       <div className="p-8 print:p-0 bg-surface-dim print:bg-white flex-1 overflow-y-auto w-full">
         
         {/* A4 Page Container */}
-        <div className="w-[210mm] min-h-[297mm] mx-auto bg-white text-black shadow-2xl print:shadow-none print:mx-0 print:w-full print:[-webkit-print-color-adjust:exact] print:[color-adjust:exact]">
+        <div 
+          className="w-[210mm] min-h-[297mm] mx-auto bg-white text-black shadow-2xl print:shadow-none print:mx-0 print:w-full print:[-webkit-print-color-adjust:exact] print:[color-adjust:exact]"
+          style={{ fontFamily: '"Times New Roman", Times, serif' }}
+        >
           
           {/* Page 1: Berita Acara */}
           <div className="pt-[15mm] pb-[10mm] px-[20mm] print:page-break-after-always">
@@ -267,7 +287,7 @@ export const PrintDocument: React.FC<PrintDocumentProps> = ({ data, uploads }) =
             </div>
 
             {/* Title */}
-            <div className="text-center font-bold mb-5 font-serif leading-[1.15]">
+            <div className="text-center font-bold mb-3 font-serif leading-[1.15]">
               <div className="text-[14pt] underline decoration-1 underline-offset-4 mb-1">BERITA ACARA</div>
               <div className="text-[12pt] uppercase">DAFTAR DATA STATISTIK SEKTORAL DAERAH</div>
               <div className="text-[12pt] uppercase">{selectedProdusen || '[NAMA PRODUSEN DATA]'}</div>
@@ -276,8 +296,8 @@ export const PrintDocument: React.FC<PrintDocumentProps> = ({ data, uploads }) =
             </div>
 
             {/* Content */}
-            <div className="text-justify font-serif text-[12pt] space-y-2 mb-6 leading-[1.15]">
-              <p className="indent-8">
+            <div className="text-justify font-serif text-[12pt] mb-3 leading-[1.15]">
+              <p className="indent-8 mb-2">
                 Pada Hari ini, ..... tanggal ..... bulan ..... tahun ....., bertempat di Kabupaten Malang, 
                 dilaksanakan Penetapan Daftar Data Statistik Sektoral Daerah pada 
                 <strong> {selectedProdusen || '[NAMA PRODUSEN DATA]'} </strong> 
@@ -287,34 +307,34 @@ export const PrintDocument: React.FC<PrintDocumentProps> = ({ data, uploads }) =
               <table className="w-full text-[12pt] align-top leading-[1.15]">
                 <tbody>
                   <tr>
-                    <td className="w-24 pb-2">KESATU</td>
-                    <td className="w-4 pb-2">:</td>
-                    <td className="pb-2 text-justify">
+                    <td className="w-24">KESATU</td>
+                    <td className="w-4">:</td>
+                    <td className="text-justify">
                       Daftar Data sebagaimana terlampir pada Berita Acara ini, ditetapkan 
                       sejumlah <strong>{totalDataCount} ({numberToWordsID(totalDataCount)})</strong> Data Statistik Sektoral Daerah (DSSD).
                     </td>
                   </tr>
                   <tr>
-                    <td className="pb-2">KEDUA</td>
-                    <td className="pb-2">:</td>
-                    <td className="pb-2 text-justify">
+                    <td>KEDUA</td>
+                    <td>:</td>
+                    <td className="text-justify">
                       Daftar Data tersebut digunakan sebagai dasar bagi Kepala Perangkat 
                       Daerah selaku Produsen Data dalam menyampaikan ke Walidata sesuai 
                       urusan tugas dan kewenangannya.
                     </td>
                   </tr>
                   <tr>
-                    <td className="pb-2">KETIGA</td>
-                    <td className="pb-2">:</td>
-                    <td className="pb-2 text-justify">
+                    <td>KETIGA</td>
+                    <td>:</td>
+                    <td className="text-justify">
                       Daftar Data dimaksud mencakup klasifikasi tentang Kode DSSD, Uraian 
                       DSSD, Satuan, dan Periode.
                     </td>
                   </tr>
                   <tr>
-                    <td className="pb-2">KEEMPAT</td>
-                    <td className="pb-2">:</td>
-                    <td className="pb-2 text-justify">
+                    <td>KEEMPAT</td>
+                    <td>:</td>
+                    <td className="text-justify">
                       Badan Perencanaan dan Pembangunan Daerah Kabupaten Malang selaku 
                       Koordinator Data telah memverifikasi daftar data tersebut dan akan 
                       digunakan sebagai acuan dalam perencanaan pembangunan.
@@ -331,33 +351,36 @@ export const PrintDocument: React.FC<PrintDocumentProps> = ({ data, uploads }) =
                 Tim Pelaksana Satu Data Kabupaten Malang
               </div>
 
-              <div className="grid grid-cols-2 gap-8 mb-6">
+              <div className="grid grid-cols-2 gap-8 mb-4">
                 <div>
-                  <div className="font-bold h-20">
+                  <div className="font-bold">
                     Produsen Data,<br/>
                     {form.jabatanProdusen}<br/>
                     Kabupaten Malang
                   </div>
+                  <div className="h-[60px]"></div>
                   <div className="font-bold underline">{form.namaProdusen}</div>
                   <div>NIP. {form.nipProdusen}</div>
                 </div>
                 <div>
-                  <div className="font-bold h-20">
+                  <div className="font-bold">
                     Walidata,<br/>
                     Kepala Dinas Komunikasi dan Informatika<br/>
                     Kabupaten Malang
                   </div>
+                  <div className="h-[60px]"></div>
                   <div className="font-bold underline">{form.namaWalidata}</div>
                   <div>NIP. {form.nipWalidata}</div>
                 </div>
               </div>
 
               <div className="w-1/2 mx-auto">
-                <div className="font-bold h-20">
+                <div className="font-bold">
                   Koordinator,<br/>
                   Kepala Badan Perencanaan Pembangunan Daerah<br/>
                   Kabupaten Malang
                 </div>
+                <div className="h-[60px]"></div>
                 <div className="font-bold underline">{form.namaKoordinator}</div>
                 <div>NIP. {form.nipKoordinator}</div>
               </div>
