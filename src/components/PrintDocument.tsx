@@ -179,10 +179,21 @@ export const PrintDocument: React.FC<PrintDocumentProps> = ({ data, uploads }) =
   }
 
   return (
-    <div className="flex flex-col w-full min-h-[calc(100vh-4.5rem)] font-sans">
+    <div className="flex flex-col w-full min-h-[calc(100vh-4.5rem)] font-sans print:block print:w-full print:min-h-0 print:h-auto print:p-0 print:m-0 print:bg-white">
       <style>
         {`
           @media print {
+            /* Sembunyikan SEMUA scrollbar untuk menghilangkan bar panjang di sisi kanan */
+            html, body, #root, * {
+              scrollbar-width: none !important;
+              -ms-overflow-style: none !important;
+            }
+            ::-webkit-scrollbar {
+              display: none !important;
+              width: 0px !important;
+              height: 0px !important;
+            }
+
             @page {
               size: A4 portrait;
               margin-top: ${marginSize};
@@ -190,27 +201,69 @@ export const PrintDocument: React.FC<PrintDocumentProps> = ({ data, uploads }) =
               margin-left: 15mm;
               margin-right: 15mm;
             }
-            body, html, #root {
-              background-color: white !important;
-              color: black !important;
+
+            body, html {
+              background-color: #ffffff !important;
+              background: #ffffff !important;
+              color: #000000 !important;
               margin: 0 !important;
               padding: 0 !important;
-            }
-            * {
-              box-shadow: none !important;
+              width: 100% !important;
+              height: auto !important;
+              min-height: 0 !important;
+              overflow: visible !important;
               -webkit-print-color-adjust: exact !important;
               print-color-adjust: exact !important;
             }
+
+            /* Reset semua wrapper leluhur agar tidak ada bar hitam di bawah dan tidak ada pemotongan flex */
+            #root,
+            #root > div,
+            main,
+            aside,
+            header {
+              background-color: #ffffff !important;
+              background: #ffffff !important;
+              color: #000000 !important;
+              margin: 0 !important;
+              padding: 0 !important;
+              width: 100% !important;
+              max-width: 100% !important;
+              height: auto !important;
+              min-height: 0 !important;
+              max-height: none !important;
+              overflow: visible !important;
+              display: block !important;
+              position: static !important;
+              box-shadow: none !important;
+              border: none !important;
+            }
+
+            * {
+              box-shadow: none !important;
+              text-shadow: none !important;
+              -webkit-print-color-adjust: exact !important;
+              print-color-adjust: exact !important;
+            }
+
             .print-page-break {
               page-break-after: always !important;
               break-after: page !important;
+            }
+            .print-page-break-before {
+              page-break-before: always !important;
+              break-before: page !important;
             }
             .print-producer-break {
               page-break-before: always !important;
               break-before: page !important;
             }
+
             table {
               page-break-inside: auto;
+              width: 100% !important;
+              max-width: 100% !important;
+              background-color: #ffffff !important;
             }
             tr {
               page-break-inside: avoid !important;
@@ -225,6 +278,7 @@ export const PrintDocument: React.FC<PrintDocumentProps> = ({ data, uploads }) =
             .avoid-break {
               page-break-inside: avoid !important;
               break-inside: avoid !important;
+              break-after: auto !important;
             }
             .force-new-page {
               page-break-before: always !important;
@@ -600,7 +654,7 @@ export const PrintDocument: React.FC<PrintDocumentProps> = ({ data, uploads }) =
       </div>
 
       {/* --- PRINT PREVIEW CONTAINER --- */}
-      <div className="p-4 sm:p-8 print:p-0 bg-[#060911]/60 print:bg-white flex-1 overflow-x-auto overflow-y-auto w-full pb-28 lg:pb-12">
+      <div className="p-4 sm:p-8 print:p-0 print:m-0 print:pb-0 bg-[#060911]/60 print:bg-white flex-1 overflow-x-auto overflow-y-auto print:overflow-visible print:block print:w-full print:min-h-0 print:h-auto w-full pb-28 lg:pb-12">
         
         {/* Render each producer document */}
         {producersToPrint.map((prodName, prodIndex) => {
@@ -612,7 +666,7 @@ export const PrintDocument: React.FC<PrintDocumentProps> = ({ data, uploads }) =
           return (
             <div 
               key={prodName}
-              className={`w-[210mm] min-h-[297mm] mx-auto bg-white text-black shadow-2xl print:shadow-none print:mx-0 print:w-full print:[-webkit-print-color-adjust:exact] print:[color-adjust:exact] mb-12 print:mb-0 ${prodIndex > 0 ? 'print-producer-break' : ''}`}
+              className={`w-[210mm] min-h-[297mm] mx-auto bg-white text-black shadow-2xl print:shadow-none print:mx-0 print:w-full print:max-w-none print:min-h-0 print:h-auto print:overflow-visible print:[-webkit-print-color-adjust:exact] print:[color-adjust:exact] mb-12 print:mb-0 ${prodIndex > 0 ? 'print-producer-break' : ''}`}
               style={{ fontFamily: '"Times New Roman", Times, serif' }}
             >
               
@@ -710,51 +764,58 @@ export const PrintDocument: React.FC<PrintDocumentProps> = ({ data, uploads }) =
                   </table>
                 </div>
 
-                {/* Date & Signatures Grid */}
+                {/* Date & Signatures Table (Print-safe Layout) */}
                 <div className="font-serif text-[12pt] text-center leading-[1.15] avoid-break" style={{ breakInside: 'avoid', pageBreakInside: 'avoid' }}>
                   <div className="mb-4">
                     Malang, {form.tanggalAcara}<br/>
                     Tim Pelaksana Satu Data Kabupaten Malang
                   </div>
 
-                  <div className="grid grid-cols-2 gap-8 mb-4">
-                    <div>
-                      <div className="font-bold">
-                        Produsen Data,<br/>
-                        {form.jabatanProdusen || `Kepala ${prodName}`}<br/>
-                        Kabupaten Malang
-                      </div>
-                      <div className="h-[60px]"></div>
-                      <div className="font-bold underline">{form.namaProdusen}</div>
-                      <div>NIP. {form.nipProdusen}</div>
-                    </div>
-                    <div>
-                      <div className="font-bold">
-                        Walidata,<br/>
-                        Kepala Dinas Komunikasi dan Informatika<br/>
-                        Kabupaten Malang
-                      </div>
-                      <div className="h-[60px]"></div>
-                      <div className="font-bold underline">{form.namaWalidata}</div>
-                      <div>NIP. {form.nipWalidata}</div>
-                    </div>
-                  </div>
-
-                  <div className="w-1/2 mx-auto avoid-break" style={{ breakInside: 'avoid', pageBreakInside: 'avoid' }}>
-                    <div className="font-bold">
-                      Koordinator,<br/>
-                      Kepala Badan Perencanaan Pembangunan Daerah<br/>
-                      Kabupaten Malang
-                    </div>
-                    <div className="h-[60px]"></div>
-                    <div className="font-bold underline">{form.namaKoordinator}</div>
-                    <div>NIP. {form.nipKoordinator}</div>
-                  </div>
+                  <table className="w-full border-0 mb-4 avoid-break" style={{ border: 'none', borderCollapse: 'collapse', pageBreakInside: 'avoid', breakInside: 'avoid', width: '100%', background: 'transparent' }}>
+                    <tbody>
+                      <tr style={{ border: 'none' }}>
+                        <td style={{ width: '50%', border: 'none', textAlign: 'center', verticalAlign: 'top', padding: '0 8px' }}>
+                          <div className="font-bold">
+                            Produsen Data,<br/>
+                            {form.jabatanProdusen || `Kepala ${prodName}`}<br/>
+                            Kabupaten Malang
+                          </div>
+                          <div className="h-[60px]"></div>
+                          <div className="font-bold underline">{form.namaProdusen}</div>
+                          <div>NIP. {form.nipProdusen}</div>
+                        </td>
+                        <td style={{ width: '50%', border: 'none', textAlign: 'center', verticalAlign: 'top', padding: '0 8px' }}>
+                          <div className="font-bold">
+                            Walidata,<br/>
+                            Kepala Dinas Komunikasi dan Informatika<br/>
+                            Kabupaten Malang
+                          </div>
+                          <div className="h-[60px]"></div>
+                          <div className="font-bold underline">{form.namaWalidata}</div>
+                          <div>NIP. {form.nipWalidata}</div>
+                        </td>
+                      </tr>
+                      <tr style={{ border: 'none' }}>
+                        <td colSpan={2} style={{ border: 'none', textAlign: 'center', paddingTop: '16px', paddingBottom: 0 }}>
+                          <div style={{ display: 'inline-block', width: '280px', textAlign: 'center' }}>
+                            <div className="font-bold">
+                              Koordinator,<br/>
+                              Kepala Badan Perencanaan Pembangunan Daerah<br/>
+                              Kabupaten Malang
+                            </div>
+                            <div className="h-[60px]"></div>
+                            <div className="font-bold underline">{form.namaKoordinator}</div>
+                            <div>NIP. {form.nipKoordinator}</div>
+                          </div>
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
                 </div>
               </div>
 
               {/* Page 2: Lampiran Berita Acara */}
-              <div className="p-[15mm] print:p-0 print:break-before-page">
+              <div className="p-[15mm] print:p-0 print-page-break-before">
                 
                 {/* Lampiran Header box */}
                 <div className="border border-black p-2 mb-6 text-xs w-[300px] ml-auto font-serif">
@@ -858,26 +919,46 @@ export const PrintDocument: React.FC<PrintDocumentProps> = ({ data, uploads }) =
                     </tbody>
                   </table>
 
-                  {/* Final Signature on Lampiran */}
-                  <div 
-                    className={`flex justify-end mt-8 mr-8 text-center font-serif text-sm avoid-break ${forceLampiranSignNewPage ? 'force-new-page pt-8' : ''}`}
+                  {/* Final Signature on Lampiran - Bulletproof Table Layout for Print */}
+                  <table 
+                    className={`w-full border-0 ${forceLampiranSignNewPage ? 'force-new-page pt-8' : 'mt-8'} avoid-break`}
                     style={{ 
-                      breakInside: 'avoid', 
-                      pageBreakInside: 'avoid',
-                      ...(forceLampiranSignNewPage ? { breakBefore: 'page', pageBreakBefore: 'always' } : {})
+                      pageBreakInside: 'avoid', 
+                      breakInside: 'avoid',
+                      ...(forceLampiranSignNewPage ? { pageBreakBefore: 'always', breakBefore: 'page' } : {}),
+                      border: 'none',
+                      borderCollapse: 'collapse',
+                      width: '100%',
+                      backgroundColor: 'transparent'
                     }}
                   >
-                    <div className="w-[280px]">
-                      <div className="font-bold">
-                        Produsen Data,<br/>
-                        {form.jabatanProdusen || `Kepala ${prodName}`}<br/>
-                        Kabupaten Malang
-                      </div>
-                      <div className="h-[60px]"></div>
-                      <div className="font-bold underline">{form.namaProdusen}</div>
-                      <div>NIP. {form.nipProdusen}</div>
-                    </div>
-                  </div>
+                    <tbody>
+                      <tr style={{ border: 'none' }}>
+                        <td style={{ width: '45%', border: 'none', padding: 0 }}></td>
+                        <td style={{ width: '55%', border: 'none', textAlign: 'center', padding: 0 }}>
+                          <div 
+                            className="font-serif text-sm avoid-break" 
+                            style={{ 
+                              display: 'inline-block',
+                              width: '280px',
+                              textAlign: 'center',
+                              pageBreakInside: 'avoid',
+                              breakInside: 'avoid'
+                            }}
+                          >
+                            <div className="font-bold leading-normal">
+                              Produsen Data,<br/>
+                              {form.jabatanProdusen || `Kepala ${prodName}`}<br/>
+                              Kabupaten Malang
+                            </div>
+                            <div style={{ height: '60px' }}></div>
+                            <div className="font-bold underline leading-normal">{form.namaProdusen}</div>
+                            <div className="leading-normal">NIP. {form.nipProdusen}</div>
+                          </div>
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
                 </div>
 
               </div>

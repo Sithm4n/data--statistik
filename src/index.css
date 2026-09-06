@@ -55,7 +55,7 @@
     background-color: var(--color-background);
     color: var(--color-on-surface);
   }
-  /* Optional: hide scrollbar for sleek look */
+  /* Custom scrollbar */
   ::-webkit-scrollbar {
     width: 6px;
     height: 6px;
@@ -69,5 +69,20 @@
   }
   ::-webkit-scrollbar-thumb:hover {
     background: var(--color-outline);
+  }
+
+  @media print {
+    html, body, #root, * {
+      background: #ffffff !important;
+      background-color: #ffffff !important;
+      color: #000000 !important;
+      scrollbar-width: none !important;
+      -ms-overflow-style: none !important;
+    }
+    ::-webkit-scrollbar {
+      display: none !important;
+      width: 0 !important;
+      height: 0 !important;
+    }
   }
 }

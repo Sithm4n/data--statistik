@@ -173,7 +173,7 @@ export default function App() {
   }
 
   return (
-    <div className="flex min-h-screen bg-background text-on-surface font-sans antialiased overflow-x-hidden">
+    <div className="flex min-h-screen bg-background text-on-surface font-sans antialiased overflow-x-hidden print:bg-white print:text-black print:overflow-visible print:block print:min-h-0 print:h-auto print:p-0 print:m-0">
       {/* Mobile Backdrop Overlay */}
       {isMobileMenuOpen && (
         <div 
@@ -307,7 +307,7 @@ export default function App() {
       </aside>
 
       {/* Main Content Area */}
-      <div className="pl-0 lg:pl-72 flex-1 flex flex-col w-full min-h-screen print:pl-0 pb-16 lg:pb-0">
+      <div className="pl-0 lg:pl-72 flex-1 flex flex-col w-full min-h-screen print:pl-0 print:p-0 print:m-0 print:block print:w-full print:min-h-0 print:h-auto print:bg-white pb-16 lg:pb-0">
         {/* Header matching Google Stitch TopNavigationBar */}
         <header className="fixed top-0 left-0 lg:left-72 right-0 h-16 lg:h-18 bg-slate-950/70 border-b border-white/5 backdrop-blur-xl z-40 flex items-center justify-between px-4 sm:px-8 shadow-lg print:hidden">
           <div className="flex items-center gap-3">
@@ -367,7 +367,7 @@ export default function App() {
         </header>
 
         {/* View Rendering */}
-        <main className="relative pt-16 lg:pt-20 flex-1 w-full overflow-x-hidden print:pt-0 print:overflow-visible">
+        <main className="relative pt-16 lg:pt-20 flex-1 w-full overflow-x-hidden print:pt-0 print:p-0 print:m-0 print:overflow-visible print:block print:w-full print:min-h-0 print:h-auto print:bg-white">
           {currentView === 'upload' && (
             <div className="p-4 sm:p-8 relative min-h-[calc(100vh-4rem)] lg:min-h-[calc(100vh-5rem)]">
               {/* Ambient Glows */}
