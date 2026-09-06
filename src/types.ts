@@ -67,9 +67,35 @@ export type UploadLog = {
 export interface UploadRecord {
   id: string;
   filename: string;
-  timestamp: string;
+  timestamp?: string;
+  uploadTime: string;
   year: string;
   data: AllData;
   totalRows: number;
+}
+
+export interface AuthUser {
+  username: string;
+  fullName: string;
+  role: string;
+  lastLogin?: string;
+}
+
+export interface LoginAttemptRecord {
+  id: string;
+  timestamp: number;
+  dateFormatted: string;
+  ipAddress: string;
+  usernameAttempted: string;
+  status: 'SUCCESS' | 'FAILED' | 'LOCKED';
+  userAgent?: string;
+}
+
+export interface SecurityStatus {
+  isLocked: boolean;
+  lockoutRemainingSeconds: number;
+  consecutiveFailures: number;
+  maxAttempts: number;
+  lockoutMinutes: number;
 }
 

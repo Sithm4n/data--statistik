@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ChevronLeft, ChevronRight, Edit2, Check, X as XIcon, Trash2, MoreHorizontal } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Edit2, Check, X as XIcon, Trash2, MoreHorizontal, AlertTriangle } from 'lucide-react';
 
 interface DataTableProps {
   data: any[];
@@ -12,6 +12,7 @@ export const DataTable: React.FC<DataTableProps> = ({ data, type, onEdit, onDele
   const [currentPage, setCurrentPage] = useState(1);
   const [editingRowIndex, setEditingRowIndex] = useState<number | null>(null);
   const [editFormData, setEditFormData] = useState<any>(null);
+  const [rowToDelete, setRowToDelete] = useState<any | null>(null);
   const rowsPerPage = 10;
   
   const indexOfLastRow = currentPage * rowsPerPage;
@@ -203,11 +204,7 @@ export const DataTable: React.FC<DataTableProps> = ({ data, type, onEdit, onDele
                       <button onClick={() => handleEditClick(row, globalIndex)} className="w-8 h-8 rounded-full flex items-center justify-center text-on-surface-variant hover:bg-surface-variant hover:text-primary transition-colors" title="Edit">
                         <Edit2 className="w-4 h-4" />
                       </button>
-                      <button onClick={() => {
-                        if (window.confirm('Yakin ingin menghapus baris data ini?')) {
-                          onDelete?.(row);
-                        }
-                      }} className="w-8 h-8 rounded-full flex items-center justify-center text-on-surface-variant hover:bg-error-container/20 hover:text-error transition-colors" title="Hapus">
+                      <button onClick={() => setRowToDelete(row)} className="w-8 h-8 rounded-full flex items-center justify-center text-on-surface-variant hover:bg-error-container/20 hover:text-error transition-colors cursor-pointer" title="Hapus">
                         <Trash2 className="w-4 h-4" />
                       </button>
                     </div>
@@ -231,8 +228,8 @@ export const DataTable: React.FC<DataTableProps> = ({ data, type, onEdit, onDele
       </div>
       
       {/* Pagination */}
-      <div className="flex items-center justify-between px-6 py-4 border-t border-outline-variant/10 bg-surface-container-lowest/30">
-        <span className="font-sans text-sm text-on-surface-variant">
+      <div className="flex flex-col sm:flex-row items-center justify-between gap-3 px-4 sm:px-6 py-3 sm:py-4 border-t border-outline-variant/10 bg-surface-container-lowest/30">
+        <span className="font-sans text-xs sm:text-sm text-on-surface-variant text-center sm:text-left">
           Menampilkan {data.length > 0 ? indexOfFirstRow + 1 : 0}-{Math.min(indexOfLastRow, data.length)} dari {data.length.toLocaleString('id-ID')} data
         </span>
         <div className="flex items-center gap-1">
@@ -241,10 +238,10 @@ export const DataTable: React.FC<DataTableProps> = ({ data, type, onEdit, onDele
             disabled={currentPage <= 1}
             className="w-8 h-8 rounded-lg flex items-center justify-center text-on-surface-variant hover:bg-surface-variant transition-colors disabled:opacity-20 disabled:cursor-not-allowed"
           >
-            <ChevronLeft className="w-5 h-5" />
+            <ChevronLeft className="w-4 h-4 sm:w-5 sm:h-5" />
           </button>
           
-          <div className="flex items-center gap-1 mx-2">
+          <div className="flex items-center gap-1 mx-1 sm:mx-2">
             {[...Array(Math.min(5, totalPages))].map((_, i) => {
               let pageNum = currentPage;
               if (currentPage < 3) pageNum = i + 1;
@@ -257,7 +254,7 @@ export const DataTable: React.FC<DataTableProps> = ({ data, type, onEdit, onDele
                 <button
                   key={pageNum}
                   onClick={() => paginate(pageNum)}
-                  className={`w-8 h-8 rounded-lg flex items-center justify-center font-sans text-sm transition-colors ${
+                  className={`w-7 h-7 sm:w-8 sm:h-8 rounded-lg flex items-center justify-center font-sans text-xs sm:text-sm transition-colors ${
                     currentPage === pageNum 
                       ? 'bg-primary text-on-primary font-bold shadow-[0_0_10px_rgba(56,189,248,0.3)]' 
                       : 'text-on-surface hover:bg-surface-variant'
@@ -274,10 +271,44 @@ export const DataTable: React.FC<DataTableProps> = ({ data, type, onEdit, onDele
             disabled={currentPage >= totalPages}
             className="w-8 h-8 rounded-lg flex items-center justify-center text-on-surface-variant hover:bg-surface-variant transition-colors disabled:opacity-20 disabled:cursor-not-allowed"
           >
-            <ChevronRight className="w-5 h-5" />
+            <ChevronRight className="w-4 h-4 sm:w-5 sm:h-5" />
           </button>
         </div>
       </div>
+
+      {/* Row Delete Confirmation Modal */}
+      {rowToDelete && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-in fade-in duration-200">
+          <div className="w-full max-w-sm bg-surface-container-low border border-error/30 rounded-3xl p-6 shadow-2xl relative text-center">
+            <div className="w-12 h-12 rounded-2xl bg-error-container/20 border border-error/30 text-error flex items-center justify-center mx-auto mb-4">
+              <AlertTriangle className="w-6 h-6" />
+            </div>
+            <h3 className="text-lg font-bold text-on-surface mb-2">Hapus Baris Data?</h3>
+            <p className="text-xs text-on-surface-variant mb-6 leading-relaxed">
+              Apakah Anda yakin ingin menghapus baris data ini dari tabel? Tindakan ini akan menghapus data pada sesi saat ini.
+            </p>
+            <div className="flex items-center gap-3">
+              <button
+                type="button"
+                onClick={() => setRowToDelete(null)}
+                className="flex-1 py-2.5 px-4 rounded-xl border border-outline-variant/30 text-on-surface-variant hover:text-on-surface hover:bg-surface-variant/30 text-xs font-medium transition-colors cursor-pointer"
+              >
+                Batal
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  onDelete?.(rowToDelete);
+                  setRowToDelete(null);
+                }}
+                className="flex-1 py-2.5 px-4 rounded-xl bg-error text-white text-xs font-bold hover:brightness-110 active:scale-95 transition-all shadow-md shadow-error/20 cursor-pointer"
+              >
+                Ya, Hapus
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

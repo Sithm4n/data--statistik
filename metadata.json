@@ -1,6 +1,6 @@
 {
-  "name": "",
-  "description": "",
+  "name": "Sistem Informasi Statistik Daerah",
+  "description": "Dashboard pengelolaan, visualisasi data e-Walidata, Sektoral, Spasial, dan cetak Berita Acara PDF Kabupaten Malang",
   "requestFramePermissions": [],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }

@@ -1,14 +1,32 @@
 import React, { useState, useMemo } from 'react';
-import { LayoutDashboard, Clock, Plus, Database, Search, Bell, BarChart2, User, Printer } from 'lucide-react';
+import { LayoutDashboard, Clock, Plus, Database, Search, Bell, BarChart2, User, Printer, Menu, X, Shield, LogOut, KeyRound } from 'lucide-react';
 import { FileUpload } from './components/FileUpload';
 import { Dashboard } from './components/Dashboard';
 import { UploadLogs } from './components/UploadLogs';
 import { PrintDocument } from './components/PrintDocument';
-import { AllData, UploadRecord } from './types';
+import { LoginPage } from './components/LoginPage';
+import { AccountSecurityModal } from './components/AccountSecurityModal';
+import { authService } from './services/authService';
+import { AllData, UploadRecord, AuthUser } from './types';
 
 export default function App() {
+  const [currentUser, setCurrentUser] = useState<AuthUser | null>(() => authService.getCurrentUser());
+  const [isSecurityModalOpen, setIsSecurityModalOpen] = useState(false);
+  const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
   const [uploads, setUploads] = useState<UploadRecord[]>([]);
   const [currentView, setCurrentView] = useState<'upload' | 'dashboard' | 'logs' | 'print'>('upload');
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+
+  const handleRequestLogout = () => {
+    setIsLogoutModalOpen(true);
+    setIsMobileMenuOpen(false);
+  };
+
+  const handleConfirmLogout = () => {
+    authService.logout();
+    setCurrentUser(null);
+    setIsLogoutModalOpen(false);
+  };
 
   const handleDataLoaded = (newData: AllData, filename: string, year: string) => {
     const processIncomingRows = (rows: any[]) => rows.map(r => ({ ...r, _rowId: Math.random().toString(36).substring(2, 9) }));
@@ -149,20 +167,49 @@ export default function App() {
     }
   };
 
+  // Jika belum login, tampilkan halaman Login dengan proteksi keamanan berlapis
+  if (!currentUser) {
+    return <LoginPage onLoginSuccess={(user) => setCurrentUser(user)} />;
+  }
+
   return (
-    <div className="flex min-h-screen bg-background text-on-surface font-sans antialiased">
-      {/* Sidebar */}
-      <aside className="fixed left-0 top-0 h-full w-72 bg-surface-container-low/40 backdrop-blur-2xl z-50 flex flex-col border-r border-primary/20 shadow-[20px_0_40px_rgba(0,0,0,0.2)] print:hidden">
-        <div className="p-8 mb-4">
+    <div className="flex min-h-screen bg-background text-on-surface font-sans antialiased overflow-x-hidden">
+      {/* Mobile Backdrop Overlay */}
+      {isMobileMenuOpen && (
+        <div 
+          className="fixed inset-0 bg-black/60 backdrop-blur-sm z-40 lg:hidden transition-opacity duration-300"
+          onClick={() => setIsMobileMenuOpen(false)}
+          aria-hidden="true"
+        />
+      )}
+
+      {/* Sidebar (Desktop Persistent, Mobile Collapsible Drawer) */}
+      <aside 
+        className={`fixed left-0 top-0 h-full w-72 bg-surface-container-low/95 lg:bg-surface-container-low/40 backdrop-blur-2xl z-50 flex flex-col border-r border-primary/20 shadow-[20px_0_40px_rgba(0,0,0,0.3)] print:hidden transition-transform duration-300 ease-in-out ${
+          isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
+        }`}
+      >
+        <div className="p-6 lg:p-8 mb-2 flex items-center justify-between">
           <div className="flex items-center gap-3 bg-gradient-to-br from-primary to-tertiary bg-clip-text text-transparent">
-            <BarChart2 className="w-8 h-8 text-primary" />
+            <BarChart2 className="w-8 h-8 text-primary shrink-0" />
             <span className="text-2xl font-bold tracking-tight">STATISTIK</span>
           </div>
+          <button
+            onClick={() => setIsMobileMenuOpen(false)}
+            className="lg:hidden p-2 rounded-xl text-on-surface-variant hover:text-on-surface hover:bg-surface-variant/30 transition-colors"
+            aria-label="Tutup Menu"
+          >
+            <X className="w-5 h-5" />
+          </button>
         </div>
+
         <nav className="flex-1 px-4 space-y-2">
           <button
-            onClick={() => setCurrentView('dashboard')}
-            className={`w-full flex items-center gap-4 px-6 py-4 rounded-xl transition-all duration-300 group ${
+            onClick={() => {
+              setCurrentView('dashboard');
+              setIsMobileMenuOpen(false);
+            }}
+            className={`w-full flex items-center gap-4 px-6 py-3.5 sm:py-4 rounded-xl transition-all duration-300 group ${
               currentView === 'dashboard' 
                 ? 'bg-primary-container text-on-primary-container shadow-[0_0_15px_rgba(2,132,199,0.3)]' 
                 : 'text-on-surface-variant hover:bg-surface-variant/30 hover:text-on-surface'
@@ -173,8 +220,11 @@ export default function App() {
           </button>
           
           <button
-            onClick={() => setCurrentView('logs')}
-            className={`w-full flex items-center gap-4 px-6 py-4 rounded-xl transition-all duration-300 group ${
+            onClick={() => {
+              setCurrentView('logs');
+              setIsMobileMenuOpen(false);
+            }}
+            className={`w-full flex items-center gap-4 px-6 py-3.5 sm:py-4 rounded-xl transition-all duration-300 group ${
               currentView === 'logs'
                 ? 'bg-primary-container text-on-primary-container shadow-[0_0_15px_rgba(2,132,199,0.3)]'
                 : 'text-on-surface-variant hover:bg-surface-variant/30 hover:text-on-surface'
@@ -185,8 +235,11 @@ export default function App() {
           </button>
 
           <button
-            onClick={() => setCurrentView('print')}
-            className={`w-full flex items-center gap-4 px-6 py-4 rounded-xl transition-all duration-300 group ${
+            onClick={() => {
+              setCurrentView('print');
+              setIsMobileMenuOpen(false);
+            }}
+            className={`w-full flex items-center gap-4 px-6 py-3.5 sm:py-4 rounded-xl transition-all duration-300 group ${
               currentView === 'print'
                 ? 'bg-primary-container text-on-primary-container shadow-[0_0_15px_rgba(2,132,199,0.3)]'
                 : 'text-on-surface-variant hover:bg-surface-variant/30 hover:text-on-surface'
@@ -197,8 +250,11 @@ export default function App() {
           </button>
 
           <button
-            onClick={() => setCurrentView('upload')}
-            className={`w-full flex items-center gap-4 px-6 py-4 rounded-xl transition-all duration-300 group ${
+            onClick={() => {
+              setCurrentView('upload');
+              setIsMobileMenuOpen(false);
+            }}
+            className={`w-full flex items-center gap-4 px-6 py-3.5 sm:py-4 rounded-xl transition-all duration-300 group ${
               currentView === 'upload'
                 ? 'bg-primary-container text-on-primary-container shadow-[0_0_15px_rgba(2,132,199,0.3)]'
                 : 'text-on-surface-variant hover:bg-surface-variant/30 hover:text-on-surface'
@@ -208,55 +264,122 @@ export default function App() {
             <span className="text-base font-medium">Data Management</span>
           </button>
         </nav>
-        <div className="p-6 mt-auto border-t border-outline-variant/10">
-          <div className="flex items-center gap-4 p-3 rounded-2xl bg-surface-variant/20 backdrop-blur-md">
-            <div className="w-10 h-10 rounded-full bg-primary flex items-center justify-center shadow-lg shadow-primary/20">
-              <User className="w-5 h-5 text-on-primary" />
+        <div className="p-4 sm:p-6 mt-auto border-t border-outline-variant/10 flex flex-col gap-3">
+          <div className="flex items-center gap-3 p-3 rounded-2xl bg-surface-variant/20 backdrop-blur-md">
+            <div className="relative">
+              <div className="w-10 h-10 rounded-full bg-primary/20 border border-primary/40 flex items-center justify-center text-primary shadow-lg shadow-primary/10 shrink-0">
+                <User className="w-5 h-5" />
+              </div>
+              <div className="absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full bg-emerald-400 border-2 border-surface"></div>
             </div>
-            <div className="flex flex-col text-left">
-              <span className="text-sm font-medium text-on-surface">Lead Analyst</span>
-              <span className="text-xs font-mono text-on-surface-variant">v1.0.4-stable</span>
+            <div className="flex flex-col text-left overflow-hidden">
+              <span className="text-sm font-semibold text-on-surface truncate" title={currentUser.username}>
+                {currentUser.username}
+              </span>
+              <span className="text-[11px] font-mono text-primary truncate">
+                {currentUser.role}
+              </span>
             </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-2">
+            <button
+              onClick={() => {
+                setIsSecurityModalOpen(true);
+                setIsMobileMenuOpen(false);
+              }}
+              className="flex items-center justify-center gap-1.5 py-2 px-2 rounded-xl bg-surface-container/60 border border-outline-variant/20 text-on-surface hover:border-primary/40 hover:text-primary transition-all text-xs font-medium"
+              title="Kelola Keamanan & Ubah Password"
+            >
+              <KeyRound className="w-3.5 h-3.5" />
+              <span>Keamanan</span>
+            </button>
+            <button
+              onClick={handleRequestLogout}
+              className="flex items-center justify-center gap-1.5 py-2 px-2 rounded-xl bg-error-container/10 border border-error/20 text-error hover:bg-error-container/20 transition-all text-xs font-medium"
+              title="Keluar dari sesi"
+            >
+              <LogOut className="w-3.5 h-3.5" />
+              <span>Keluar</span>
+            </button>
           </div>
         </div>
       </aside>
 
       {/* Main Content Area */}
-      <div className="pl-72 flex-1 flex flex-col w-full min-h-screen print:pl-0">
-        {/* Header */}
-        <header className="fixed top-0 left-72 right-0 h-20 bg-surface-dim/60 backdrop-blur-md z-40 flex items-center justify-between px-8 border-b border-primary/20 shadow-lg print:hidden">
+      <div className="pl-0 lg:pl-72 flex-1 flex flex-col w-full min-h-screen print:pl-0 pb-16 lg:pb-0">
+        {/* Header matching Google Stitch TopNavigationBar */}
+        <header className="fixed top-0 left-0 lg:left-72 right-0 h-16 lg:h-18 bg-slate-950/70 border-b border-white/5 backdrop-blur-xl z-40 flex items-center justify-between px-4 sm:px-8 shadow-lg print:hidden">
           <div className="flex items-center gap-3">
-            <span className="text-xl font-medium text-on-surface tracking-wide">Sistem Informasi Statistik</span>
-          </div>
-          <div className="flex items-center gap-6">
             <button
-              onClick={() => setCurrentView('upload')}
-              className="flex items-center gap-2 px-6 py-2.5 rounded-full bg-primary-container text-on-primary-container font-medium hover:brightness-110 transition-all shadow-[0_0_20px_rgba(2,132,199,0.2)] active:scale-95"
+              onClick={() => setIsMobileMenuOpen(true)}
+              className="lg:hidden p-2 -ml-2 rounded-xl text-slate-300 hover:bg-white/5 transition-colors"
+              aria-label="Buka Menu"
             >
-              <Plus className="w-5 h-5" />
-              Add Data
+              <Menu className="w-6 h-6" />
             </button>
-            <div className="flex items-center gap-4 text-on-surface-variant">
-              <Search className="w-5 h-5 hover:text-primary cursor-pointer transition-colors" />
-              <Bell className="w-5 h-5 hover:text-primary cursor-pointer transition-colors" />
+            <div className="flex items-center gap-3">
+              <div className="h-9 w-9 rounded-xl bg-gradient-to-tr from-sky-600 to-cyan-400 p-0.5 shadow-[0_0_25px_-5px_rgba(56,189,248,0.35)] shrink-0 hidden sm:block">
+                <div className="w-full h-full bg-slate-900 rounded-[10px] flex items-center justify-center">
+                  <BarChart2 className="w-5 h-5 text-cyan-400" />
+                </div>
+              </div>
+              <h1 className="text-base sm:text-lg font-semibold tracking-tight text-white flex items-center gap-2 truncate">
+                Sistem Informasi Statistik
+              </h1>
             </div>
+          </div>
+
+          <div className="flex items-center gap-3 sm:gap-3.5">
+            {/* + Add Data Button */}
+            <button
+              onClick={() => {
+                setCurrentView('upload');
+                setIsMobileMenuOpen(false);
+              }}
+              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full text-xs font-semibold bg-gradient-to-r from-sky-500 to-cyan-500 hover:from-sky-400 hover:to-cyan-400 text-white shadow-[0_0_20px_-3px_rgba(14,165,233,0.45)] transition-all duration-200 cursor-pointer hover:-translate-y-0.5 active:translate-y-0"
+            >
+              <Plus className="w-3.5 h-3.5 stroke-[2.5]" />
+              <span className="hidden sm:inline">Add Data</span>
+              <span className="sm:hidden">Add</span>
+            </button>
+
+            {/* User Chip */}
+            <button
+              onClick={() => setIsSecurityModalOpen(true)}
+              className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-slate-800/80 border border-white/10 text-xs font-medium text-slate-300 hover:border-cyan-500/40 hover:text-white transition-all cursor-pointer"
+              title="Pusat Keamanan & Kredensial Akun"
+            >
+              <Shield className="w-3.5 h-3.5 text-cyan-400 shrink-0" />
+              <span className="font-mono">@{currentUser.username}</span>
+            </button>
+
+            {/* Logout Action Button */}
+            <button
+              onClick={handleRequestLogout}
+              className="p-2 rounded-full text-slate-400 hover:text-rose-400 hover:bg-white/5 transition-colors duration-200 cursor-pointer"
+              title="Keluar"
+              aria-label="Keluar"
+            >
+              <LogOut className="w-4 h-4 sm:w-5 sm:h-5" />
+            </button>
           </div>
         </header>
 
         {/* View Rendering */}
-        <main className="relative pt-20 flex-1 w-full overflow-x-hidden print:pt-0 print:overflow-visible">
+        <main className="relative pt-16 lg:pt-20 flex-1 w-full overflow-x-hidden print:pt-0 print:overflow-visible">
           {currentView === 'upload' && (
-            <div className="p-8 relative min-h-[calc(100vh-5rem)]">
+            <div className="p-4 sm:p-8 relative min-h-[calc(100vh-4rem)] lg:min-h-[calc(100vh-5rem)]">
               {/* Ambient Glows */}
-              <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-primary/20 rounded-full blur-[120px] -z-10 mix-blend-screen pointer-events-none"></div>
-              <div className="absolute bottom-0 left-0 w-[400px] h-[400px] bg-tertiary-container/10 rounded-full blur-[100px] -z-10 pointer-events-none"></div>
+              <div className="absolute top-0 right-0 w-[300px] sm:w-[500px] h-[300px] sm:h-[500px] bg-primary/20 rounded-full blur-[100px] sm:blur-[120px] -z-10 mix-blend-screen pointer-events-none"></div>
+              <div className="absolute bottom-0 left-0 w-[250px] sm:w-[400px] h-[250px] sm:h-[400px] bg-tertiary-container/10 rounded-full blur-[80px] sm:blur-[100px] -z-10 pointer-events-none"></div>
               
-              <div className="max-w-3xl mx-auto mt-12 relative z-10">
-                <div className="text-center mb-12">
-                  <h2 className="text-4xl font-bold tracking-tight bg-gradient-to-br from-on-surface to-on-surface-variant bg-clip-text text-transparent">
+              <div className="max-w-3xl mx-auto mt-4 sm:mt-12 relative z-10">
+                <div className="text-center mb-6 sm:mb-12">
+                  <h2 className="text-2xl sm:text-4xl font-bold tracking-tight bg-gradient-to-br from-on-surface to-on-surface-variant bg-clip-text text-transparent">
                     Tambahkan Data Baru
                   </h2>
-                  <p className="mt-4 text-on-surface-variant max-w-xl mx-auto">
+                  <p className="mt-2 sm:mt-4 text-xs sm:text-base text-on-surface-variant max-w-xl mx-auto">
                     Unggah file Excel yang berisi sheet e-Walidata, Sektoral, dan Spasial untuk divisualisasikan dalam dashboard.
                   </p>
                 </div>
@@ -264,10 +387,10 @@ export default function App() {
                 <FileUpload onDataLoaded={handleDataLoaded} />
                 
                 {uploads.length > 0 && (
-                  <div className="mt-12 text-center">
+                  <div className="mt-8 sm:mt-12 text-center">
                     <button 
                       onClick={() => setCurrentView('dashboard')}
-                      className="text-primary font-medium hover:text-primary-container transition-colors flex items-center gap-2 justify-center mx-auto"
+                      className="text-primary font-medium hover:text-primary-container transition-colors flex items-center gap-2 justify-center mx-auto text-sm"
                     >
                       <LayoutDashboard className="w-4 h-4" />
                       Kembali ke Dashboard
@@ -292,13 +415,13 @@ export default function App() {
           )}
 
           {currentView === 'dashboard' && !aggregatedData && (
-            <div className="flex flex-col items-center justify-center h-full pt-32 text-on-surface-variant relative print:hidden">
-              <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-primary/10 rounded-full blur-[120px] -z-10 mix-blend-screen pointer-events-none"></div>
-              <Database className="w-16 h-16 opacity-30 mb-4" />
-              <p className="text-lg">Belum ada data yang diunggah.</p>
+            <div className="flex flex-col items-center justify-center h-full pt-16 sm:pt-32 text-on-surface-variant relative print:hidden px-4 text-center">
+              <div className="absolute top-0 right-0 w-[300px] sm:w-[500px] h-[300px] sm:h-[500px] bg-primary/10 rounded-full blur-[100px] -z-10 mix-blend-screen pointer-events-none"></div>
+              <Database className="w-12 h-12 sm:w-16 sm:h-16 opacity-30 mb-4" />
+              <p className="text-base sm:text-lg">Belum ada data yang diunggah.</p>
               <button 
                 onClick={() => setCurrentView('upload')}
-                className="mt-4 px-6 py-2.5 rounded-full bg-primary-container text-on-primary-container font-medium hover:brightness-110 transition-all shadow-[0_0_20px_rgba(2,132,199,0.2)]"
+                className="mt-4 px-6 py-2.5 rounded-full bg-primary-container text-on-primary-container font-medium hover:brightness-110 transition-all shadow-[0_0_20px_rgba(2,132,199,0.2)] text-sm sm:text-base"
               >
                 Mulai Unggah Data
               </button>
@@ -309,7 +432,109 @@ export default function App() {
             <PrintDocument data={aggregatedData} uploads={uploads} />
           )}
         </main>
+
+        {/* Mobile Bottom Navigation Bar */}
+        <div className="lg:hidden fixed bottom-0 left-0 right-0 h-16 bg-surface-container-lowest/95 backdrop-blur-xl border-t border-primary/20 z-30 flex items-center justify-around px-2 print:hidden shadow-lg">
+          <button
+            onClick={() => { setCurrentView('dashboard'); setIsMobileMenuOpen(false); }}
+            className={`flex flex-col items-center justify-center gap-1 flex-1 py-1 transition-colors ${
+              currentView === 'dashboard' ? 'text-primary font-bold' : 'text-on-surface-variant hover:text-on-surface'
+            }`}
+          >
+            <LayoutDashboard className="w-5 h-5" />
+            <span className="text-[10px]">Dashboard</span>
+          </button>
+          <button
+            onClick={() => { setCurrentView('logs'); setIsMobileMenuOpen(false); }}
+            className={`flex flex-col items-center justify-center gap-1 flex-1 py-1 transition-colors ${
+              currentView === 'logs' ? 'text-primary font-bold' : 'text-on-surface-variant hover:text-on-surface'
+            }`}
+          >
+            <Clock className="w-5 h-5" />
+            <span className="text-[10px]">Riwayat</span>
+          </button>
+          <button
+            onClick={() => { setCurrentView('print'); setIsMobileMenuOpen(false); }}
+            className={`flex flex-col items-center justify-center gap-1 flex-1 py-1 transition-colors ${
+              currentView === 'print' ? 'text-primary font-bold' : 'text-on-surface-variant hover:text-on-surface'
+            }`}
+          >
+            <Printer className="w-5 h-5" />
+            <span className="text-[10px]">Cetak PDF</span>
+          </button>
+          <button
+            onClick={() => { setCurrentView('upload'); setIsMobileMenuOpen(false); }}
+            className={`flex flex-col items-center justify-center gap-1 flex-1 py-1 transition-colors ${
+              currentView === 'upload' ? 'text-primary font-bold' : 'text-on-surface-variant hover:text-on-surface'
+            }`}
+          >
+            <Database className="w-5 h-5" />
+            <span className="text-[10px]">Upload</span>
+          </button>
+        </div>
       </div>
+
+      {/* Account & Security Modal */}
+      <AccountSecurityModal
+        isOpen={isSecurityModalOpen}
+        onClose={() => setIsSecurityModalOpen(false)}
+        currentUser={currentUser}
+        onUserUpdated={(updated) => setCurrentUser(updated)}
+      />
+
+      {/* Logout Confirmation Modal - Google Stitch Design 2 */}
+      {isLogoutModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-md animate-in fade-in duration-200">
+          <div 
+            className="relative z-50 w-full max-w-[440px] px-2"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="modal-title"
+            aria-describedby="modal-description"
+          >
+            <div className="backdrop-blur-2xl rounded-3xl border border-white/10 shadow-[0_25px_50px_-12px_rgba(0,0,0,0.7),inset_0_1px_1px_0_rgba(255,255,255,0.12)] p-8 sm:p-9 text-center bg-[radial-gradient(120%_120%_at_50%_0%,rgba(30,41,59,0.85)_0%,rgba(15,23,42,0.95)_100%)] transition-all duration-300">
+              {/* Top Decorative Icon Squircle */}
+              <div className="flex justify-center mb-6">
+                <div className="relative w-16 h-16 rounded-2xl flex items-center justify-center border border-rose-400/20 shadow-inner bg-[linear-gradient(135deg,rgba(244,63,94,0.15)_0%,rgba(246,168,158,0.08)_100%)] group">
+                  <div className="absolute inset-0 rounded-2xl bg-gradient-to-tr from-rose-500/10 to-cyan-400/10 opacity-75 pointer-events-none"></div>
+                  <LogOut className="w-7 h-7 text-[#F6A89E] relative z-10 transition-transform duration-200 group-hover:translate-x-0.5" />
+                </div>
+              </div>
+
+              {/* Modal Title */}
+              <h2 id="modal-title" className="text-xl sm:text-2xl font-semibold text-white tracking-tight mb-3">
+                Konfirmasi Keluar
+              </h2>
+
+              {/* Description Context with Username Badge */}
+              <p id="modal-description" className="text-slate-300/90 text-sm leading-relaxed px-1 mb-8">
+                Apakah Anda yakin ingin mengakhiri sesi aktif dan keluar dari akun{' '}
+                <span className="inline-flex items-center px-2 py-0.5 mt-1 rounded-md text-xs font-medium bg-slate-800/80 text-cyan-300 border border-cyan-500/20 shadow-sm font-mono tracking-wide">
+                  @{currentUser.username}
+                </span>?
+              </p>
+
+              {/* Dual Action Interactive Buttons */}
+              <div className="grid grid-cols-2 gap-3.5 pt-1">
+                <button
+                  type="button"
+                  onClick={() => setIsLogoutModalOpen(false)}
+                  className="w-full inline-flex justify-center items-center py-3 px-4 rounded-xl text-sm font-medium text-slate-300 bg-white/[0.05] hover:bg-white/[0.1] active:bg-white/[0.15] border border-white/10 hover:border-white/20 transition-all duration-150 focus:outline-none cursor-pointer"
+                >
+                  Batal
+                </button>
+                <button
+                  type="button"
+                  onClick={handleConfirmLogout}
+                  className="w-full inline-flex justify-center items-center py-3 px-4 rounded-xl text-sm font-semibold text-slate-950 bg-[#F6A89E] hover:bg-[#f49488] active:opacity-95 shadow-[0_0_25px_-4px_rgba(246,168,158,0.4)] transition-all duration-150 focus:outline-none cursor-pointer"
+                >
+                  Ya, Keluar
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
