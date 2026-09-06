@@ -216,12 +216,30 @@ export const PrintDocument: React.FC<PrintDocumentProps> = ({ data, uploads }) =
               print-color-adjust: exact !important;
             }
 
-            /* Reset semua wrapper leluhur agar tidak ada bar hitam di bawah dan tidak ada pemotongan flex */
+            /* Sembunyikan SEMUA elemen navigasi, header web, dan kontrol konfigurasi saat dicetak */
+            header,
+            aside,
+            nav,
+            [class*="print:hidden"],
+            .print\\:hidden {
+              display: none !important;
+              visibility: hidden !important;
+              height: 0 !important;
+              width: 0 !important;
+              margin: 0 !important;
+              padding: 0 !important;
+              overflow: hidden !important;
+              position: absolute !important;
+              top: -9999px !important;
+              left: -9999px !important;
+              opacity: 0 !important;
+              pointer-events: none !important;
+            }
+
+            /* Reset wrapper utama agar dokumen mengisi halaman penuh tanpa bar hitam */
             #root,
             #root > div,
-            main,
-            aside,
-            header {
+            main {
               background-color: #ffffff !important;
               background: #ffffff !important;
               color: #000000 !important;
