@@ -75,6 +75,8 @@
     header,
     aside,
     nav,
+    footer,
+    [class*="print:hidden"],
     .print\:hidden {
       display: none !important;
       visibility: hidden !important;
@@ -83,15 +85,28 @@
       margin: 0 !important;
       padding: 0 !important;
       overflow: hidden !important;
+      position: absolute !important;
+      top: -99999px !important;
+      left: -99999px !important;
     }
 
-    html, body, #root {
+    html, body, #root, #root > div {
       background: #ffffff !important;
       background-color: #ffffff !important;
       color: #000000 !important;
+      margin: 0 !important;
+      padding: 0 !important;
+      width: 100% !important;
+      max-width: 100% !important;
+      height: auto !important;
+      min-height: 0 !important;
+      position: static !important;
+      overflow: visible !important;
       scrollbar-width: none !important;
       -ms-overflow-style: none !important;
     }
+
+    /* Hilangkan semua scrollbar dan bar sisi */
     ::-webkit-scrollbar {
       display: none !important;
       width: 0 !important;

@@ -16,6 +16,18 @@ export const UploadLogs: React.FC<UploadLogsProps> = ({ uploads, onDeleteUpload 
   const processingCount = 0;
   const failedCount = 0;
 
+  const formatDateDisplay = (dateStr?: string) => {
+    if (!dateStr) return '-';
+    const parsed = new Date(dateStr);
+    if (!isNaN(parsed.getTime())) {
+      return parsed.toLocaleString('id-ID', {
+        dateStyle: 'long',
+        timeStyle: 'medium'
+      });
+    }
+    return dateStr;
+  };
+
   const handleDownload = (upload: UploadRecord) => {
     try {
       const workbook = XLSX.utils.book_new();
@@ -159,7 +171,7 @@ export const UploadLogs: React.FC<UploadLogsProps> = ({ uploads, onDeleteUpload 
                       {upload.year}
                     </span>
                   </td>
-                  <td className="px-4 sm:px-6 py-3 sm:py-4 text-on-surface-variant whitespace-nowrap">{upload.uploadTime}</td>
+                  <td className="px-4 sm:px-6 py-3 sm:py-4 text-on-surface-variant whitespace-nowrap">{formatDateDisplay(upload.uploadTime)}</td>
                   <td className="px-4 sm:px-6 py-3 sm:py-4 text-right font-mono text-xs sm:text-sm text-on-surface">
                     {upload.totalRows.toLocaleString('id-ID')}
                   </td>

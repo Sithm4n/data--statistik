@@ -1,6 +1,18 @@
 import { supabase } from './supabaseClient';
 import { AllData, DataEWalidata, DataSektoral, DataSpasial, UploadRecord } from '../types';
 
+// Helper to safely format dates into ISO-8601 for PostgreSQL timestamptz
+function toSafeIsoString(dateVal?: any): string {
+  if (!dateVal) return new Date().toISOString();
+  if (typeof dateVal === 'string') {
+    const parsed = Date.parse(dateVal);
+    if (!isNaN(parsed)) return new Date(parsed).toISOString();
+  } else if (dateVal instanceof Date && !isNaN(dateVal.getTime())) {
+    return dateVal.toISOString();
+  }
+  return new Date().toISOString();
+}
+
 // Helper to chunk arrays for bulk insertion
 function chunkArray<T>(array: T[], size: number): T[][] {
   const chunks: T[][] = [];
@@ -10,12 +22,48 @@ function chunkArray<T>(array: T[], size: number): T[][] {
   return chunks;
 }
 
+// Helper to fetch all rows across pagination limits (Supabase defaults to 1,000 max rows per query)
+async function fetchAllRowsByUploadId(table: string, uploadId: string): Promise<any[]> {
+  let allRows: any[] = [];
+  let from = 0;
+  const step = 1000;
+  let hasMore = true;
+
+  while (hasMore) {
+    const { data, error } = await supabase
+      .from(table)
+      .select('*')
+      .eq('upload_id', uploadId)
+      .range(from, from + step - 1);
+
+    if (error) {
+      console.warn(`Error fetching ${table} rows for upload ${uploadId}:`, error);
+      break;
+    }
+
+    if (data && data.length > 0) {
+      allRows = allRows.concat(data);
+      if (data.length < step) {
+        hasMore = false;
+      } else {
+        from += step;
+      }
+    } else {
+      hasMore = false;
+    }
+  }
+
+  return allRows;
+}
+
 export const supabaseDataService = {
   /**
    * Menyimpan Upload Record baru beserta seluruh baris datanya (mendukung 10k+ baris dengan batching)
    */
   async saveUploadRecord(record: UploadRecord): Promise<{ success: boolean; error?: string }> {
     try {
+      const safeUploadedAt = toSafeIsoString(record.uploadTime);
+
       // 1. Simpan metadata upload
       const { error: uploadErr } = await supabase
         .from('uploads')
@@ -24,16 +72,17 @@ export const supabaseDataService = {
           filename: record.filename,
           year: record.year,
           total_rows: record.totalRows,
-          uploaded_at: record.uploadTime || new Date().toISOString(),
+          uploaded_at: safeUploadedAt,
           uploaded_by: 'adminstatistik'
         });
 
       if (uploadErr) {
-        console.warn('Gagal menyimpan metadata upload ke Supabase:', uploadErr);
+        console.error('Gagal menyimpan metadata upload ke Supabase:', uploadErr);
         return { success: false, error: uploadErr.message };
       }
 
       const BATCH_SIZE = 400;
+      const nowIso = new Date().toISOString();
 
       // 2. Simpan sheet e-Walidata (secara batch/chunk)
       if (record.data.eWalidata && record.data.eWalidata.length > 0) {
@@ -47,13 +96,16 @@ export const supabaseDataService = {
           tag_urusan: item['Tag urusan'] || '',
           produsen_data: item['Produsen Data'] || 'Umum',
           tahun: item.Tahun || record.year,
-          last_modified: item._lastModified || new Date().toISOString()
+          last_modified: toSafeIsoString(item._lastModified)
         }));
 
         const chunks = chunkArray(ewaliRows, BATCH_SIZE);
         for (const chunk of chunks) {
           const { error } = await supabase.from('data_ewalidata').insert(chunk);
-          if (error) console.warn('Error batch e-walidata chunk:', error);
+          if (error) {
+            console.error('Error batch e-walidata chunk:', error);
+            return { success: false, error: error.message };
+          }
         }
       }
 
@@ -70,13 +122,16 @@ export const supabaseDataService = {
           produsen_data: item['Produsen Data'] || 'Umum',
           info_sub_kegiatan: item['Info Sub Kegiatan'] || '',
           tahun: item.Tahun || record.year,
-          last_modified: item._lastModified || new Date().toISOString()
+          last_modified: toSafeIsoString(item._lastModified)
         }));
 
         const chunks = chunkArray(sektoralRows, BATCH_SIZE);
         for (const chunk of chunks) {
           const { error } = await supabase.from('data_sektoral').insert(chunk);
-          if (error) console.warn('Error batch sektoral chunk:', error);
+          if (error) {
+            console.error('Error batch sektoral chunk:', error);
+            return { success: false, error: error.message };
+          }
         }
       }
 
@@ -91,13 +146,16 @@ export const supabaseDataService = {
           skala: item.Skala || '',
           produsen_data: item['Produsen Data'] || 'Umum',
           tahun: item.Tahun || record.year,
-          last_modified: item._lastModified || new Date().toISOString()
+          last_modified: toSafeIsoString(item._lastModified)
         }));
 
         const chunks = chunkArray(spasialRows, BATCH_SIZE);
         for (const chunk of chunks) {
           const { error } = await supabase.from('data_spasial').insert(chunk);
-          if (error) console.warn('Error batch spasial chunk:', error);
+          if (error) {
+            console.error('Error batch spasial chunk:', error);
+            return { success: false, error: error.message };
+          }
         }
       }
 
@@ -109,7 +167,7 @@ export const supabaseDataService = {
   },
 
   /**
-   * Mengambil semua riwayat upload beserta data dari Supabase
+   * Mengambil semua riwayat upload beserta data dari Supabase (dengan paginasi lengkap)
    */
   async loadAllUploads(): Promise<UploadRecord[]> {
     try {
@@ -125,14 +183,14 @@ export const supabaseDataService = {
       const results: UploadRecord[] = [];
 
       for (const up of uploadsList) {
-        // Ambil data untuk tiap upload
-        const [ewalidataRes, sektoralRes, spasialRes] = await Promise.all([
-          supabase.from('data_ewalidata').select('*').eq('upload_id', up.id),
-          supabase.from('data_sektoral').select('*').eq('upload_id', up.id),
-          supabase.from('data_spasial').select('*').eq('upload_id', up.id)
+        // Ambil data untuk tiap upload dengan penanganan paging 1000+ baris
+        const [ewalidataRows, sektoralRows, spasialRows] = await Promise.all([
+          fetchAllRowsByUploadId('data_ewalidata', up.id),
+          fetchAllRowsByUploadId('data_sektoral', up.id),
+          fetchAllRowsByUploadId('data_spasial', up.id)
         ]);
 
-        const eWalidata: DataEWalidata[] = (ewalidataRes.data || []).map((row: any) => ({
+        const eWalidata: DataEWalidata[] = (ewalidataRows || []).map((row: any) => ({
           No: row.no_urut,
           'Kode DSSD': row.kode_dssd,
           'Uraian DSSD': row.uraian_dssd,
@@ -146,7 +204,7 @@ export const supabaseDataService = {
           _lastModified: row.last_modified
         }));
 
-        const sektoral: DataSektoral[] = (sektoralRes.data || []).map((row: any) => ({
+        const sektoral: DataSektoral[] = (sektoralRows || []).map((row: any) => ({
           No: row.no_urut,
           'Kode Data': row.kode_data,
           'Uraian DSSD': row.uraian_dssd,
@@ -161,7 +219,7 @@ export const supabaseDataService = {
           _lastModified: row.last_modified
         }));
 
-        const spasial: DataSpasial[] = (spasialRes.data || []).map((row: any) => ({
+        const spasial: DataSpasial[] = (spasialRows || []).map((row: any) => ({
           No: row.no_urut,
           'Kode Data': row.kode_data,
           'Nama Informasi Geospasial': row.nama_geospasial,
@@ -230,6 +288,86 @@ export const supabaseDataService = {
       return !error;
     } catch (err) {
       console.warn('Gagal delete row di Supabase:', err);
+      return false;
+    }
+  },
+
+  /**
+   * Mengupdate baris tunggal pada Supabase saat diedit di web
+   */
+  async updateSingleRow(tabType: keyof AllData, rowId: string, updatedData: any): Promise<boolean> {
+    try {
+      const tableMap: Record<keyof AllData, string> = {
+        eWalidata: 'data_ewalidata',
+        sektoral: 'data_sektoral',
+        spasial: 'data_spasial'
+      };
+
+      const tableName = tableMap[tabType];
+      if (!tableName) return false;
+
+      let payload: any = {
+        last_modified: new Date().toISOString()
+      };
+
+      if (tabType === 'eWalidata') {
+        if (updatedData.No !== undefined) payload.no_urut = String(updatedData.No);
+        if (updatedData['Kode DSSD'] !== undefined) payload.kode_dssd = updatedData['Kode DSSD'];
+        if (updatedData['Uraian DSSD'] !== undefined) payload.uraian_dssd = updatedData['Uraian DSSD'];
+        if (updatedData.Satuan !== undefined) payload.satuan = updatedData.Satuan;
+        if (updatedData['Definisi Operasional'] !== undefined) payload.definisi_operasional = updatedData['Definisi Operasional'];
+        if (updatedData['Tag urusan'] !== undefined) payload.tag_urusan = updatedData['Tag urusan'];
+        if (updatedData['Produsen Data'] !== undefined) payload.produsen_data = updatedData['Produsen Data'];
+      } else if (tabType === 'sektoral') {
+        if (updatedData.No !== undefined) payload.no_urut = String(updatedData.No);
+        if (updatedData['Kode Data'] !== undefined) payload.kode_data = updatedData['Kode Data'];
+        if (updatedData['Uraian DSSD'] !== undefined) payload.uraian_dssd = updatedData['Uraian DSSD'];
+        if (updatedData.Satuan !== undefined) payload.satuan = updatedData.Satuan;
+        if (updatedData['Definisi Operasional'] !== undefined) payload.definisi_operasional = updatedData['Definisi Operasional'];
+        if (updatedData['Tag urusan'] !== undefined) payload.tag_urusan = updatedData['Tag urusan'];
+        if (updatedData['Produsen Data'] !== undefined) payload.produsen_data = updatedData['Produsen Data'];
+        if (updatedData['Info Sub Kegiatan'] !== undefined) payload.info_sub_kegiatan = updatedData['Info Sub Kegiatan'];
+      } else if (tabType === 'spasial') {
+        if (updatedData.No !== undefined) payload.no_urut = String(updatedData.No);
+        if (updatedData['Kode Data'] !== undefined) payload.kode_data = updatedData['Kode Data'];
+        if (updatedData['Nama Informasi Geospasial'] !== undefined) payload.nama_geospasial = updatedData['Nama Informasi Geospasial'];
+        const formatVal = updatedData['Format penyimpanan'] || updatedData['Format penyimpanan data'] || updatedData['Format Penyimpanan Data'];
+        if (formatVal !== undefined) payload.format_penyimpanan = formatVal;
+        if (updatedData.Skala !== undefined) payload.skala = updatedData.Skala;
+        if (updatedData['Produsen Data'] !== undefined) payload.produsen_data = updatedData['Produsen Data'];
+      }
+
+      const { error } = await supabase.from(tableName).update(payload).eq('id', rowId);
+      if (error) {
+        console.warn('Gagal update row di Supabase:', error);
+        return false;
+      }
+      return true;
+    } catch (err) {
+      console.warn('Exception update row di Supabase:', err);
+      return false;
+    }
+  },
+
+  /**
+   * Bulk delete baris berdasarkan filter (misal: Tahun)
+   */
+  async bulkDeleteRows(tabType: keyof AllData, filterKey: string, filterValue: string): Promise<boolean> {
+    try {
+      const tableMap: Record<keyof AllData, string> = {
+        eWalidata: 'data_ewalidata',
+        sektoral: 'data_sektoral',
+        spasial: 'data_spasial'
+      };
+
+      const tableName = tableMap[tabType];
+      if (!tableName) return false;
+
+      const colName = filterKey === 'Tahun' ? 'tahun' : filterKey;
+      const { error } = await supabase.from(tableName).delete().eq(colName, filterValue);
+      return !error;
+    } catch (err) {
+      console.warn('Exception bulk delete di Supabase:', err);
       return false;
     }
   }

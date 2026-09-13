@@ -60,8 +60,8 @@ export const PrintDocument: React.FC<PrintDocumentProps> = ({ data, uploads }) =
 
   const [isYearDropdownOpen, setIsYearDropdownOpen] = useState(false);
 
-  // Full composite nomor surat
-  const fullNomorSurat = `${nomorPrefix}      ${nomorSuffix}`;
+  // Full composite nomor surat with non-breaking space for ~4 digits
+  const fullNomorSurat = `${nomorPrefix}\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0${nomorSuffix}`;
 
   // Update date fields whenever selectedDate or dateTextMode changes
   const applyDateAutomation = (dateStr: string, mode: 'terbilang' | 'angka') => {
@@ -793,30 +793,38 @@ export const PrintDocument: React.FC<PrintDocumentProps> = ({ data, uploads }) =
                     <tbody>
                       <tr style={{ border: 'none' }}>
                         <td style={{ width: '50%', border: 'none', textAlign: 'center', verticalAlign: 'top', padding: '0 8px' }}>
-                          <div className="font-bold">
+                          <div className="font-normal leading-tight">
                             Produsen Data,<br/>
                             {form.jabatanProdusen || `Kepala ${prodName}`}<br/>
                             Kabupaten Malang
                           </div>
-                          <div className="h-[60px]"></div>
-                          <div className="font-bold underline">{form.namaProdusen}</div>
-                          <div>NIP. {form.nipProdusen}</div>
                         </td>
                         <td style={{ width: '50%', border: 'none', textAlign: 'center', verticalAlign: 'top', padding: '0 8px' }}>
-                          <div className="font-bold">
+                          <div className="font-normal leading-tight">
                             Walidata,<br/>
                             Kepala Dinas Komunikasi dan Informatika<br/>
                             Kabupaten Malang
                           </div>
-                          <div className="h-[60px]"></div>
+                        </td>
+                      </tr>
+                      <tr style={{ border: 'none' }}>
+                        <td style={{ height: '60px', border: 'none', padding: 0 }}></td>
+                        <td style={{ height: '60px', border: 'none', padding: 0 }}></td>
+                      </tr>
+                      <tr style={{ border: 'none' }}>
+                        <td style={{ width: '50%', border: 'none', textAlign: 'center', verticalAlign: 'bottom', padding: '0 8px' }}>
+                          <div className="font-bold underline">{form.namaProdusen}</div>
+                          <div>NIP. {form.nipProdusen}</div>
+                        </td>
+                        <td style={{ width: '50%', border: 'none', textAlign: 'center', verticalAlign: 'bottom', padding: '0 8px' }}>
                           <div className="font-bold underline">{form.namaWalidata}</div>
                           <div>NIP. {form.nipWalidata}</div>
                         </td>
                       </tr>
                       <tr style={{ border: 'none' }}>
                         <td colSpan={2} style={{ border: 'none', textAlign: 'center', paddingTop: '16px', paddingBottom: 0 }}>
-                          <div style={{ display: 'inline-block', width: '280px', textAlign: 'center' }}>
-                            <div className="font-bold">
+                          <div style={{ display: 'inline-block', width: '320px', textAlign: 'center' }}>
+                            <div className="font-normal leading-tight">
                               Koordinator,<br/>
                               Kepala Badan Perencanaan Pembangunan Daerah<br/>
                               Kabupaten Malang
@@ -964,7 +972,7 @@ export const PrintDocument: React.FC<PrintDocumentProps> = ({ data, uploads }) =
                               breakInside: 'avoid'
                             }}
                           >
-                            <div className="font-bold leading-normal">
+                            <div className="font-normal leading-normal">
                               Produsen Data,<br/>
                               {form.jabatanProdusen || `Kepala ${prodName}`}<br/>
                               Kabupaten Malang

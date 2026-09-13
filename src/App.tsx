@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, useCallback, useRef } from 'react';
 import { LayoutDashboard, Clock, Plus, Database, Search, Bell, BarChart2, User, Printer, Menu, X, Shield, LogOut, KeyRound, Cloud, RefreshCw } from 'lucide-react';
 import { FileUpload } from './components/FileUpload';
 import { Dashboard } from './components/Dashboard';
@@ -8,7 +8,7 @@ import { LoginPage } from './components/LoginPage';
 import { AccountSecurityModal } from './components/AccountSecurityModal';
 import { authService } from './services/authService';
 import { supabaseDataService } from './services/supabaseDataService';
-import { testSupabaseConnection } from './services/supabaseClient';
+import { testSupabaseConnection, supabase } from './services/supabaseClient';
 import { AllData, UploadRecord, AuthUser } from './types';
 
 export default function App() {
@@ -20,28 +20,101 @@ export default function App() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isCloudConnected, setIsCloudConnected] = useState<boolean | null>(null);
   const [isSyncing, setIsSyncing] = useState<boolean>(false);
+  const isSyncingRef = useRef(false);
 
-  // Load existing datasets from Supabase Cloud on startup
+  // Fungsi untuk memuat ulang data dari Supabase (sinkronisasi multi-device)
+  const refreshDataFromCloud = useCallback(async (silent = false) => {
+    if (isSyncingRef.current) return;
+    isSyncingRef.current = true;
+    if (!silent) setIsSyncing(true);
+
+    try {
+      const remoteUploads = await supabaseDataService.loadAllUploads();
+      if (remoteUploads && remoteUploads.length > 0) {
+        setUploads(remoteUploads);
+        setCurrentView(prev => prev === 'upload' ? 'dashboard' : prev);
+      }
+      setIsCloudConnected(true);
+    } catch (err) {
+      console.warn('Gagal sinkronisasi data dari Supabase:', err);
+    } finally {
+      isSyncingRef.current = false;
+      if (!silent) setIsSyncing(false);
+    }
+  }, []);
+
+  // Load initial data and connect to Supabase
   useEffect(() => {
     testSupabaseConnection().then(res => {
       setIsCloudConnected(res.ok);
     });
 
-    setIsSyncing(true);
-    supabaseDataService.loadAllUploads()
-      .then(remoteUploads => {
-        if (remoteUploads && remoteUploads.length > 0) {
-          setUploads(remoteUploads);
-          setCurrentView('dashboard');
+    refreshDataFromCloud(false);
+  }, [refreshDataFromCloud]);
+
+  // Real-time synchronization subscription across all devices
+  useEffect(() => {
+    // 1. Supabase Realtime Channel: Mendengar perubahan tabel database (INSERT, UPDATE, DELETE)
+    const channel = supabase
+      .channel('schema-db-changes')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'uploads' },
+        (payload) => {
+          console.log('[Realtime] Perubahan uploads terdeteksi:', payload.eventType);
+          refreshDataFromCloud(true);
         }
-      })
-      .catch(err => {
-        console.warn('Gagal sinkronisasi data dari Supabase:', err);
-      })
-      .finally(() => {
-        setIsSyncing(false);
+      )
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'data_ewalidata' },
+        (payload) => {
+          console.log('[Realtime] Perubahan data_ewalidata terdeteksi:', payload.eventType);
+          refreshDataFromCloud(true);
+        }
+      )
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'data_sektoral' },
+        (payload) => {
+          console.log('[Realtime] Perubahan data_sektoral terdeteksi:', payload.eventType);
+          refreshDataFromCloud(true);
+        }
+      )
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'data_spasial' },
+        (payload) => {
+          console.log('[Realtime] Perubahan data_spasial terdeteksi:', payload.eventType);
+          refreshDataFromCloud(true);
+        }
+      )
+      .subscribe((status) => {
+        if (status === 'SUBSCRIBED') {
+          console.log('✅ Realtime Supabase tersambung: Sinkronisasi antar device aktif');
+          setIsCloudConnected(true);
+        }
       });
-  }, []);
+
+    // 2. Window Focus & Polling Fallback (setiap 10 detik & saat tab dibuka di HP/Laptop)
+    // Memastikan jika browser mobile masuk background dan kembali, data langsung sinkron
+    const handleFocus = () => {
+      refreshDataFromCloud(true);
+    };
+    window.addEventListener('focus', handleFocus);
+    window.addEventListener('online', handleFocus);
+
+    const intervalId = setInterval(() => {
+      refreshDataFromCloud(true);
+    }, 10000);
+
+    return () => {
+      supabase.removeChannel(channel);
+      window.removeEventListener('focus', handleFocus);
+      window.removeEventListener('online', handleFocus);
+      clearInterval(intervalId);
+    };
+  }, [refreshDataFromCloud]);
 
   const handleRequestLogout = () => {
     setIsLogoutModalOpen(true);
@@ -55,15 +128,18 @@ export default function App() {
   };
 
   const handleDataLoaded = (newData: AllData, filename: string, year: string) => {
-    const processIncomingRows = (rows: any[]) => rows.map(r => ({ ...r, _rowId: Math.random().toString(36).substring(2, 9) }));
+    const processIncomingRows = (rows: any[]) =>
+      rows.map(r => ({
+        ...r,
+        _rowId: typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).substring(2, 9)
+      }));
+
+    const newUploadId = typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : '00000000-0000-4000-8000-' + Math.random().toString(16).substring(2, 14).padEnd(12, '0');
 
     const newUpload: UploadRecord = {
-      id: Math.random().toString(36).substring(2, 9),
+      id: newUploadId,
       filename,
-      uploadTime: new Date().toLocaleString('id-ID', {
-        dateStyle: 'long',
-        timeStyle: 'medium'
-      }),
+      uploadTime: new Date().toISOString(),
       year,
       data: {
         eWalidata: processIncomingRows(newData.eWalidata),
@@ -83,7 +159,7 @@ export default function App() {
         if (res.success) {
           setIsCloudConnected(true);
         } else {
-          console.warn('Peringatan penyimpanan cloud:', res.error);
+          console.error('Peringatan penyimpanan cloud:', res.error);
         }
       })
       .finally(() => {
@@ -101,9 +177,9 @@ export default function App() {
     };
 
     uploads.forEach(upload => {
-      combined.eWalidata.push(...upload.data.eWalidata.map((r, i) => ({ ...r, Tahun: upload.year, _uploadId: upload.id, _originalIndex: i })));
-      combined.sektoral.push(...upload.data.sektoral.map((r, i) => ({ ...r, Tahun: upload.year, _uploadId: upload.id, _originalIndex: i })));
-      combined.spasial.push(...upload.data.spasial.map((r, i) => ({ ...r, Tahun: upload.year, _uploadId: upload.id, _originalIndex: i })));
+      combined.eWalidata.push(...upload.data.eWalidata.map((r, i) => ({ ...r, Tahun: upload.year, _uploadId: upload.id, _uploadTime: upload.uploadTime, _originalIndex: i })));
+      combined.sektoral.push(...upload.data.sektoral.map((r, i) => ({ ...r, Tahun: upload.year, _uploadId: upload.id, _uploadTime: upload.uploadTime, _originalIndex: i })));
+      combined.spasial.push(...upload.data.spasial.map((r, i) => ({ ...r, Tahun: upload.year, _uploadId: upload.id, _uploadTime: upload.uploadTime, _originalIndex: i })));
     });
 
     return combined;
@@ -145,6 +221,9 @@ export default function App() {
         }
       };
     }));
+
+    // Update langsung ke Supabase Cloud agar instan ter-sinkronisasi ke semua device
+    supabaseDataService.updateSingleRow(tabType, rowId, newRowData);
   };
 
   const handleDeleteRow = (tabType: keyof AllData, row: any) => {
@@ -201,6 +280,9 @@ export default function App() {
         totalRows: up.data.eWalidata.length + up.data.sektoral.length + up.data.spasial.length - (up.data[tabType].length - updatedTab.length)
       };
     }));
+
+    // Hapus massal di Supabase
+    supabaseDataService.bulkDeleteRows(tabType, filterKey, filterValue);
   };
 
   const handleDeleteUpload = (id: string) => {
@@ -375,18 +457,20 @@ export default function App() {
           </div>
 
           <div className="flex items-center gap-3 sm:gap-3.5">
-            {/* Supabase Cloud Status Indicator */}
-            <div 
-              className="hidden md:flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-slate-900/80 border border-slate-700/60 text-[11px] font-medium shadow-inner"
-              title={isCloudConnected ? "Terhubung ke Supabase Cloud (https://ngnufiwvzewowgfwgjjc.supabase.co)" : "Menghubungkan ke Supabase..."}
+            {/* Supabase Cloud Status Indicator & Realtime Sync Button */}
+            <button 
+              onClick={() => refreshDataFromCloud(false)}
+              disabled={isSyncing}
+              className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-full bg-slate-900/80 hover:bg-slate-800 border border-slate-700/60 hover:border-sky-500/50 text-[11px] font-medium shadow-inner transition-all cursor-pointer disabled:opacity-75"
+              title={isCloudConnected ? "Realtime Cloud Aktif (Klik untuk sinkronkan ulang langsung)" : "Menghubungkan ke Supabase..."}
             >
               <div className={`w-2 h-2 rounded-full ${isCloudConnected ? 'bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.8)]' : isCloudConnected === false ? 'bg-rose-400' : 'bg-amber-400 animate-ping'}`} />
               <span className="text-slate-300 flex items-center gap-1.5">
                 <Cloud className="w-3 h-3 text-sky-400" />
-                <span className="font-mono text-[10px] text-slate-300">Supabase</span>
-                {isSyncing && <RefreshCw className="w-2.5 h-2.5 text-cyan-400 animate-spin" />}
+                <span className="font-mono text-[10px] text-slate-300 hidden sm:inline">Supabase</span>
+                <RefreshCw className={`w-3 h-3 text-cyan-400 ${isSyncing ? 'animate-spin' : 'opacity-70 hover:opacity-100'}`} />
               </span>
-            </div>
+            </button>
 
             {/* + Add Data Button */}
             <button

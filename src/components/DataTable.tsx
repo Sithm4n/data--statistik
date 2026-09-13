@@ -22,6 +22,18 @@ export const DataTable: React.FC<DataTableProps> = ({ data, type, onEdit, onDele
 
   const paginate = (pageNumber: number) => setCurrentPage(pageNumber);
 
+  const formatDateDisplay = (dateStr?: string) => {
+    if (!dateStr) return '-';
+    const parsed = new Date(dateStr);
+    if (!isNaN(parsed.getTime())) {
+      return parsed.toLocaleString('id-ID', {
+        dateStyle: 'short',
+        timeStyle: 'short'
+      });
+    }
+    return dateStr;
+  };
+
   const handleEditClick = (row: any, globalIndex: number) => {
     setEditingRowIndex(globalIndex);
     setEditFormData({ ...row });
@@ -185,8 +197,8 @@ export const DataTable: React.FC<DataTableProps> = ({ data, type, onEdit, onDele
                   </>
                 )}
                 <td className="py-5 px-6 font-sans text-sm text-on-surface-variant whitespace-nowrap">
-                  {row._uploadTime || '-'}<br/>
-                  {row._lastModified && <span className="text-[10px] opacity-60 block mt-0.5">Edit: {row._lastModified}</span>}
+                  {formatDateDisplay(row._uploadTime)}<br/>
+                  {row._lastModified && <span className="text-[10px] opacity-60 block mt-0.5">Edit: {formatDateDisplay(row._lastModified)}</span>}
                 </td>
                 
                 <td className="py-5 px-6 text-right whitespace-nowrap sticky right-0 bg-surface/40 backdrop-blur-sm group-hover:bg-surface-variant/40 transition-colors shadow-[-10px_0_15px_-5px_rgba(0,0,0,0.05)] border-l border-outline-variant/10">
