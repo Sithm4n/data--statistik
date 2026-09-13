@@ -1,5 +1,5 @@
-import React, { useState, useMemo } from 'react';
-import { LayoutDashboard, Clock, Plus, Database, Search, Bell, BarChart2, User, Printer, Menu, X, Shield, LogOut, KeyRound } from 'lucide-react';
+import React, { useState, useMemo, useEffect } from 'react';
+import { LayoutDashboard, Clock, Plus, Database, Search, Bell, BarChart2, User, Printer, Menu, X, Shield, LogOut, KeyRound, Cloud, RefreshCw } from 'lucide-react';
 import { FileUpload } from './components/FileUpload';
 import { Dashboard } from './components/Dashboard';
 import { UploadLogs } from './components/UploadLogs';
@@ -7,6 +7,8 @@ import { PrintDocument } from './components/PrintDocument';
 import { LoginPage } from './components/LoginPage';
 import { AccountSecurityModal } from './components/AccountSecurityModal';
 import { authService } from './services/authService';
+import { supabaseDataService } from './services/supabaseDataService';
+import { testSupabaseConnection } from './services/supabaseClient';
 import { AllData, UploadRecord, AuthUser } from './types';
 
 export default function App() {
@@ -16,6 +18,30 @@ export default function App() {
   const [uploads, setUploads] = useState<UploadRecord[]>([]);
   const [currentView, setCurrentView] = useState<'upload' | 'dashboard' | 'logs' | 'print'>('upload');
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isCloudConnected, setIsCloudConnected] = useState<boolean | null>(null);
+  const [isSyncing, setIsSyncing] = useState<boolean>(false);
+
+  // Load existing datasets from Supabase Cloud on startup
+  useEffect(() => {
+    testSupabaseConnection().then(res => {
+      setIsCloudConnected(res.ok);
+    });
+
+    setIsSyncing(true);
+    supabaseDataService.loadAllUploads()
+      .then(remoteUploads => {
+        if (remoteUploads && remoteUploads.length > 0) {
+          setUploads(remoteUploads);
+          setCurrentView('dashboard');
+        }
+      })
+      .catch(err => {
+        console.warn('Gagal sinkronisasi data dari Supabase:', err);
+      })
+      .finally(() => {
+        setIsSyncing(false);
+      });
+  }, []);
 
   const handleRequestLogout = () => {
     setIsLogoutModalOpen(true);
@@ -49,6 +75,20 @@ export default function App() {
 
     setUploads(prev => [...prev, newUpload]);
     setCurrentView('dashboard');
+
+    // Simpan ke Supabase Cloud (mendukung 10k+ data secara batch)
+    setIsSyncing(true);
+    supabaseDataService.saveUploadRecord(newUpload)
+      .then(res => {
+        if (res.success) {
+          setIsCloudConnected(true);
+        } else {
+          console.warn('Peringatan penyimpanan cloud:', res.error);
+        }
+      })
+      .finally(() => {
+        setIsSyncing(false);
+      });
   };
 
   const aggregatedData = useMemo(() => {
@@ -127,6 +167,9 @@ export default function App() {
         totalRows: up.data.eWalidata.length + up.data.sektoral.length + up.data.spasial.length - 1
       };
     }));
+
+    // Hapus di Supabase jika ada ID
+    supabaseDataService.deleteSingleRow(tabType, rowId);
   };
 
   const handleBulkDelete = (tabType: keyof AllData, filterKey: string, filterValue: string) => {
@@ -162,6 +205,7 @@ export default function App() {
 
   const handleDeleteUpload = (id: string) => {
     setUploads(prev => prev.filter(up => up.id !== id));
+    supabaseDataService.deleteUploadRecord(id);
     if (uploads.length === 1) {
       setCurrentView('upload');
     }
@@ -331,6 +375,19 @@ export default function App() {
           </div>
 
           <div className="flex items-center gap-3 sm:gap-3.5">
+            {/* Supabase Cloud Status Indicator */}
+            <div 
+              className="hidden md:flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-slate-900/80 border border-slate-700/60 text-[11px] font-medium shadow-inner"
+              title={isCloudConnected ? "Terhubung ke Supabase Cloud (https://ngnufiwvzewowgfwgjjc.supabase.co)" : "Menghubungkan ke Supabase..."}
+            >
+              <div className={`w-2 h-2 rounded-full ${isCloudConnected ? 'bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.8)]' : isCloudConnected === false ? 'bg-rose-400' : 'bg-amber-400 animate-ping'}`} />
+              <span className="text-slate-300 flex items-center gap-1.5">
+                <Cloud className="w-3 h-3 text-sky-400" />
+                <span className="font-mono text-[10px] text-slate-300">Supabase</span>
+                {isSyncing && <RefreshCw className="w-2.5 h-2.5 text-cyan-400 animate-spin" />}
+              </span>
+            </div>
+
             {/* + Add Data Button */}
             <button
               onClick={() => {

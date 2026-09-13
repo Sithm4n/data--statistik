@@ -1,5 +1,6 @@
 import bcrypt from 'bcryptjs';
 import { AuthUser, LoginAttemptRecord, SecurityStatus } from '../types';
+import { supabase } from './supabaseClient';
 
 const STORAGE_KEY_USER = 'sis_auth_user_v1';
 const STORAGE_KEY_SESSION = 'sis_auth_session_v1';
@@ -23,7 +24,7 @@ interface LockoutState {
   lockoutUntil: number; // timestamp
 }
 
-// Initial seed: username: 'adminstatistik', password: '12345678'
+// Initial seed: username: 'adminstatistik', password: 'Password123!'
 function getOrInitCredentials(): StoredCredentials {
   try {
     const saved = localStorage.getItem(STORAGE_KEY_USER);
@@ -36,7 +37,7 @@ function getOrInitCredentials(): StoredCredentials {
 
   // Generate bcrypt salt & hash for default password
   const salt = bcrypt.genSaltSync(10);
-  const hash = bcrypt.hashSync('12345678', salt);
+  const hash = bcrypt.hashSync('Password123!', salt);
 
   const initialUser: StoredCredentials = {
     username: 'adminstatistik',
@@ -156,26 +157,74 @@ export const authService = {
     const creds = getOrInitCredentials();
     const lockout = getLockoutState();
 
-    // Cek apakah username cocok (case-insensitive)
+    // 1. Coba verifikasi via Supabase Cloud
+    let isCloudAuthenticated = false;
+    let cloudUser: AuthUser | null = null;
+
+    try {
+      // Coba lewat RPC function verify_user_login
+      const { data: rpcData, error: rpcError } = await supabase.rpc('verify_user_login', {
+        p_username: cleanUsername,
+        p_password: cleanPassword
+      });
+
+      if (!rpcError && Array.isArray(rpcData) && rpcData.length > 0 && rpcData[0].is_valid) {
+        isCloudAuthenticated = true;
+        cloudUser = {
+          username: rpcData[0].username,
+          fullName: rpcData[0].full_name || 'Administrator Statistik',
+          role: rpcData[0].role || 'Super Admin',
+          lastLogin: new Date().toLocaleString('id-ID', {
+            dateStyle: 'medium',
+            timeStyle: 'short'
+          })
+        };
+      } else {
+        // Coba alternatif query tabel app_users langsung jika RPC belum di-create
+        const { data: userRow } = await supabase
+          .from('app_users')
+          .select('*')
+          .ilike('username', cleanUsername)
+          .single();
+
+        if (userRow && userRow.password_hash) {
+          const match = bcrypt.compareSync(cleanPassword, userRow.password_hash);
+          if (match) {
+            isCloudAuthenticated = true;
+            cloudUser = {
+              username: userRow.username,
+              fullName: userRow.full_name,
+              role: userRow.role,
+              lastLogin: new Date().toLocaleString('id-ID', {
+                dateStyle: 'medium',
+                timeStyle: 'short'
+              })
+            };
+          }
+        }
+      }
+    } catch (e) {
+      console.warn('Supabase auth check bypassed to local:', e);
+    }
+
+    // 2. Cek apakah username & password cocok di penyimpanan lokal
     const isUserMatch = cleanUsername.toLowerCase() === creds.username.toLowerCase();
-    
-    // Verifikasi hash Bcrypt
-    let isPasswordMatch = false;
+    let isLocalPasswordMatch = false;
     if (isUserMatch) {
       try {
-        isPasswordMatch = bcrypt.compareSync(cleanPassword, creds.passwordHash);
+        isLocalPasswordMatch = bcrypt.compareSync(cleanPassword, creds.passwordHash);
       } catch (err) {
         console.error('Bcrypt comparison error', err);
       }
     }
 
-    // Login Berhasil
-    if (isUserMatch && isPasswordMatch) {
+    // Login Berhasil (baik dari Supabase Cloud maupun Local)
+    if (isCloudAuthenticated || (isUserMatch && isLocalPasswordMatch)) {
       // Reset lockout counter
       saveLockoutState({ consecutiveFailures: 0, lockoutUntil: 0 });
       logAttempt(cleanUsername, 'SUCCESS');
 
-      const userSession: AuthUser = {
+      const userSession: AuthUser = cloudUser || {
         username: creds.username,
         fullName: creds.fullName,
         role: creds.role,
@@ -260,6 +309,28 @@ export const authService = {
     // Hash password baru dengan Bcrypt (10 salt rounds)
     const newSalt = bcrypt.genSaltSync(10);
     const newHash = bcrypt.hashSync(newPasswordInput, newSalt);
+
+    // 1. Simpan ke Supabase Cloud
+    try {
+      // Coba perbarui via RPC change_user_password jika tersedia
+      const { data: rpcSuccess } = await supabase.rpc('change_user_password', {
+        p_username: creds.username,
+        p_old_password: currentPasswordInput,
+        p_new_password: newPasswordInput
+      });
+
+      // Update username di Supabase app_users
+      await supabase
+        .from('app_users')
+        .update({
+          username: cleanNewUsername,
+          password_hash: newHash,
+          updated_at: new Date().toISOString()
+        })
+        .ilike('username', creds.username);
+    } catch (e) {
+      console.warn('Gagal sinkronisasi update kredensial ke Supabase:', e);
+    }
 
     const updatedCreds: StoredCredentials = {
       ...creds,
