@@ -22,7 +22,7 @@ export default function App() {
   const [isSyncing, setIsSyncing] = useState<boolean>(false);
   const isSyncingRef = useRef(false);
 
-  // Fungsi untuk memuat ulang data dari Supabase (sinkronisasi multi-device)
+  // Fungsi untuk memuat ulang data dari Supabase (sinkronisasi multi-device di background)
   const refreshDataFromCloud = useCallback(async (silent = false) => {
     if (isSyncingRef.current) return;
     isSyncingRef.current = true;
@@ -32,7 +32,6 @@ export default function App() {
       const remoteUploads = await supabaseDataService.loadAllUploads();
       if (remoteUploads && remoteUploads.length > 0) {
         setUploads(remoteUploads);
-        setCurrentView(prev => prev === 'upload' ? 'dashboard' : prev);
       }
       setIsCloudConnected(true);
     } catch (err) {
@@ -43,14 +42,28 @@ export default function App() {
     }
   }, []);
 
-  // Load initial data and connect to Supabase
+  // Load initial data on mount and connect to Supabase
   useEffect(() => {
     testSupabaseConnection().then(res => {
       setIsCloudConnected(res.ok);
     });
 
-    refreshDataFromCloud(false);
-  }, [refreshDataFromCloud]);
+    setIsSyncing(true);
+    supabaseDataService.loadAllUploads()
+      .then(remoteUploads => {
+        if (remoteUploads && remoteUploads.length > 0) {
+          setUploads(remoteUploads);
+          setCurrentView('dashboard');
+        }
+        setIsCloudConnected(true);
+      })
+      .catch(err => {
+        console.warn('Gagal load data awal dari Supabase:', err);
+      })
+      .finally(() => {
+        setIsSyncing(false);
+      });
+  }, []);
 
   // Real-time synchronization subscription across all devices
   useEffect(() => {
