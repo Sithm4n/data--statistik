@@ -206,6 +206,7 @@ export const PrintDocument: React.FC<PrintDocumentProps> = ({ data, uploads }) =
               background-color: #ffffff !important;
               background: #ffffff !important;
               color: #000000 !important;
+              font-family: Arial, Helvetica, sans-serif !important;
               margin: 0 !important;
               padding: 0 !important;
               width: 100% !important;
@@ -685,7 +686,7 @@ export const PrintDocument: React.FC<PrintDocumentProps> = ({ data, uploads }) =
             <div 
               key={prodName}
               className={`w-[210mm] min-h-[297mm] mx-auto bg-white text-black shadow-2xl print:shadow-none print:mx-0 print:w-full print:max-w-none print:min-h-0 print:h-auto print:overflow-visible print:[-webkit-print-color-adjust:exact] print:[color-adjust:exact] mb-12 print:mb-0 ${prodIndex > 0 ? 'print-producer-break' : ''}`}
-              style={{ fontFamily: '"Times New Roman", Times, serif' }}
+              style={{ fontFamily: 'Arial, Helvetica, sans-serif' }}
             >
               
               {/* Web preview divider for batch printing */}
@@ -715,7 +716,7 @@ export const PrintDocument: React.FC<PrintDocumentProps> = ({ data, uploads }) =
                       className="max-w-full max-h-full object-contain" 
                     />
                   </div>
-                  <div className="flex-1 text-center font-serif leading-[1.15]">
+                  <div className="flex-1 text-center leading-[1.15]">
                     <div className="text-[14pt]">PEMERINTAH KABUPATEN MALANG</div>
                     <div className="text-[18pt] font-bold tracking-wide">DINAS KOMUNIKASI DAN INFORMATIKA</div>
                     <div className="text-[10pt]">Jalan K.H. Agus Salim No. 7 Gedung J Lantai 3, Malang, Jawa Timur</div>
@@ -725,8 +726,8 @@ export const PrintDocument: React.FC<PrintDocumentProps> = ({ data, uploads }) =
                 </div>
 
                 {/* Title */}
-                <div className="text-center font-bold mb-3 font-serif leading-[1.15]">
-                  <div className="text-[14pt] underline decoration-1 underline-offset-4 mb-1">BERITA ACARA</div>
+                <div className="text-center font-bold mb-3 leading-[1.15]">
+                  <div className="text-[14pt] mb-1">BERITA ACARA</div>
                   <div className="text-[12pt] uppercase">DAFTAR DATA STATISTIK SEKTORAL DAERAH</div>
                   <div className="text-[12pt] uppercase">{prodName}</div>
                   <div className="text-[12pt] uppercase">KABUPATEN MALANG</div>
@@ -734,7 +735,7 @@ export const PrintDocument: React.FC<PrintDocumentProps> = ({ data, uploads }) =
                 </div>
 
                 {/* Content */}
-                <div className="text-justify font-serif text-[12pt] mb-3 leading-[1.15]">
+                <div className="text-justify text-[12pt] mb-3 leading-[1.15]">
                   <p className="indent-8 mb-2">
                     Pada Hari ini, <strong>{autoFillDate ? (form.hari || '.....') : '.....'}</strong> tanggal <strong>{autoFillDate ? (form.tanggalTeks || '.....') : '.....'}</strong> bulan <strong>{autoFillDate ? (form.bulanTeks || '.....') : '.....'}</strong> tahun <strong>{autoFillDate ? (form.tahunTeks || '.....') : '.....'}</strong>, bertempat di Kabupaten Malang, 
                     dilaksanakan Penetapan Daftar Data Statistik Sektoral Daerah pada 
@@ -783,7 +784,7 @@ export const PrintDocument: React.FC<PrintDocumentProps> = ({ data, uploads }) =
                 </div>
 
                 {/* Date & Signatures Table (Print-safe Layout) */}
-                <div className="font-serif text-[12pt] text-center leading-[1.15] avoid-break" style={{ breakInside: 'avoid', pageBreakInside: 'avoid' }}>
+                <div className="text-[12pt] text-center leading-[1.15] avoid-break" style={{ breakInside: 'avoid', pageBreakInside: 'avoid' }}>
                   <div className="mb-4">
                     Malang, {form.tanggalAcara}<br/>
                     Tim Pelaksana Satu Data Kabupaten Malang
@@ -843,8 +844,8 @@ export const PrintDocument: React.FC<PrintDocumentProps> = ({ data, uploads }) =
               {/* Page 2: Lampiran Berita Acara */}
               <div className="p-[15mm] print:p-0 print-page-break-before">
                 
-                {/* Lampiran Header box */}
-                <div className="border border-black p-2 mb-6 text-xs w-[300px] ml-auto font-serif">
+                {/* Lampiran Header box without border */}
+                <div className="p-2 mb-6 text-xs w-[300px] ml-auto">
                   <table className="w-full">
                     <tbody>
                       <tr><td colSpan={3}>Lampiran Berita Acara</td></tr>
@@ -855,15 +856,15 @@ export const PrintDocument: React.FC<PrintDocumentProps> = ({ data, uploads }) =
                   </table>
                 </div>
 
-                <div className="text-center font-bold mb-6 font-serif uppercase text-sm">
-                  <div className="underline decoration-1 underline-offset-4">LAMPIRAN BERITA ACARA</div>
+                <div className="text-center font-bold mb-6 uppercase text-sm">
+                  <div>LAMPIRAN BERITA ACARA</div>
                   <div>DAFTAR DATA STATISTIK SEKTORAL DAERAH</div>
                   <div>{prodName}</div>
                   <div>KABUPATEN MALANG</div>
                 </div>
 
                 {/* Tables Container */}
-                <div className="font-serif text-[11px] print:text-[10px]">
+                <div className="text-[11px] print:text-[10px]">
                   
                   {/* E-Walidata Table */}
                   <table className="w-full border-collapse border border-black mb-0">
@@ -963,7 +964,7 @@ export const PrintDocument: React.FC<PrintDocumentProps> = ({ data, uploads }) =
                         <td style={{ width: '45%', border: 'none', padding: 0 }}></td>
                         <td style={{ width: '55%', border: 'none', textAlign: 'center', padding: 0 }}>
                           <div 
-                            className="font-serif text-sm avoid-break" 
+                            className="text-sm avoid-break" 
                             style={{ 
                               display: 'inline-block',
                               width: '280px',
