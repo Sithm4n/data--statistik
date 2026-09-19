@@ -23,6 +23,7 @@ import {
 } from 'lucide-react';
 import { producerConfigService, getSmartJabatan } from '../services/producerConfigService';
 import { LOGO_MALANG_SVG } from '../assets/logoKabMalang';
+import { KabupatenMalangLogo } from './KabupatenMalangLogo';
 
 interface BatchPrintPageProps {
   data: AllData | null;
@@ -66,9 +67,13 @@ export const BatchPrintPage: React.FC<BatchPrintPageProps> = ({ data, uploads })
   // Kop Logo state (persisted in localStorage)
   const [logoSrc] = useState<string>(() => {
     try {
-      return localStorage.getItem('app-kop-logo') || LOGO_MALANG_SVG;
+      const saved = localStorage.getItem('app-kop-logo');
+      if (saved && (saved.startsWith('data:image/') || saved.startsWith('blob:'))) {
+        return saved;
+      }
+      return '';
     } catch {
-      return LOGO_MALANG_SVG;
+      return '';
     }
   });
 
@@ -776,11 +781,15 @@ export const BatchPrintPage: React.FC<BatchPrintPageProps> = ({ data, uploads })
                   {/* Kop Surat */}
                   <div className="flex items-center border-b-[3px] border-double border-black pb-2.5 mb-3">
                     <div className="w-[68px] h-[82px] flex items-center justify-center shrink-0 mr-3">
-                      <img 
-                        src={logoSrc} 
-                        alt="Logo Kab Malang" 
-                        className="max-w-full max-h-full object-contain" 
-                      />
+                      {logoSrc ? (
+                        <img 
+                          src={logoSrc} 
+                          alt="Logo Kab Malang" 
+                          className="max-w-full max-h-full object-contain" 
+                        />
+                      ) : (
+                        <KabupatenMalangLogo className="w-full h-full object-contain" />
+                      )}
                     </div>
                     <div className="flex-1 text-center leading-[1.18]">
                       <div className="text-[13pt] font-semibold tracking-wide">PEMERINTAH KABUPATEN MALANG</div>

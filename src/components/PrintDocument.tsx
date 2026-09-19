@@ -1,8 +1,9 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { AllData, UploadRecord } from '../types';
-import { Printer, Settings2, FileText, ChevronDown, Check, Calendar, Sparkles, CheckCircle2, Layers, Image as ImageIcon } from 'lucide-react';
+import { Printer, Settings2, FileText, ChevronDown, Check, Calendar, Sparkles, CheckCircle2, Layers, Image as ImageIcon, RotateCcw } from 'lucide-react';
 import { producerConfigService, getSmartJabatan } from '../services/producerConfigService';
 import { LOGO_MALANG_SVG } from '../assets/logoKabMalang';
+import { KabupatenMalangLogo } from './KabupatenMalangLogo';
 
 interface PrintDocumentProps {
   data: AllData | null;
@@ -47,9 +48,13 @@ export const PrintDocument: React.FC<PrintDocumentProps> = ({ data, uploads }) =
   // Kop Logo state (persisted in localStorage)
   const [logoSrc, setLogoSrc] = useState<string>(() => {
     try {
-      return localStorage.getItem('app-kop-logo') || LOGO_MALANG_SVG;
+      const saved = localStorage.getItem('app-kop-logo');
+      if (saved && (saved.startsWith('data:image/') || saved.startsWith('blob:'))) {
+        return saved;
+      }
+      return '';
     } catch {
-      return LOGO_MALANG_SVG;
+      return '';
     }
   });
 
@@ -71,7 +76,7 @@ export const PrintDocument: React.FC<PrintDocumentProps> = ({ data, uploads }) =
   };
 
   const handleResetLogo = () => {
-    setLogoSrc(LOGO_MALANG_SVG);
+    setLogoSrc('');
     try {
       localStorage.removeItem('app-kop-logo');
     } catch (err) {
@@ -513,6 +518,50 @@ export const PrintDocument: React.FC<PrintDocumentProps> = ({ data, uploads }) =
                 </div>
               </div>
 
+              {/* Logo Kop Surat Customizer */}
+              <div className="pt-2 border-t border-white/5">
+                <div className="flex items-center justify-between mb-2">
+                  <label className="text-xs font-medium text-slate-300 flex items-center gap-1.5">
+                    <ImageIcon className="w-3.5 h-3.5 text-cyan-400" />
+                    Logo Kop Surat
+                  </label>
+                  {logoSrc && (
+                    <button
+                      type="button"
+                      onClick={handleResetLogo}
+                      className="text-[10px] text-cyan-400 hover:text-cyan-300 hover:underline flex items-center gap-1 cursor-pointer"
+                    >
+                      <RotateCcw className="w-3 h-3" />
+                      Logo Bawaan
+                    </button>
+                  )}
+                </div>
+                
+                <div className="flex items-center gap-3 p-2.5 rounded-xl bg-slate-800/40 border border-white/5">
+                  <div className="w-10 h-12 bg-white/5 rounded-lg p-1 border border-white/10 flex items-center justify-center shrink-0">
+                    {logoSrc ? (
+                      <img src={logoSrc} alt="Preview Logo" className="max-w-full max-h-full object-contain" />
+                    ) : (
+                      <KabupatenMalangLogo className="w-full h-full object-contain" />
+                    )}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-[11px] font-medium text-slate-200 truncate">
+                      {logoSrc ? 'Logo Kustom Aktif' : 'Lambang Resmi Kab. Malang (Vektor)'}
+                    </p>
+                    <label className="inline-flex items-center gap-1 text-[10px] text-cyan-400 hover:text-cyan-300 hover:underline cursor-pointer mt-0.5">
+                      <span>Unggah Gambar Logo (.png / .jpg / .svg)</span>
+                      <input 
+                        type="file" 
+                        accept="image/*" 
+                        onChange={handleLogoUpload} 
+                        className="hidden" 
+                      />
+                    </label>
+                  </div>
+                </div>
+              </div>
+
             </div>
 
             <div className="mt-6 pt-3 border-t border-white/5 flex items-center justify-between text-[11px] text-slate-400">
@@ -790,11 +839,15 @@ export const PrintDocument: React.FC<PrintDocumentProps> = ({ data, uploads }) =
                   {/* KOP Surat */}
                   <div className="flex items-center border-b-[3px] border-double border-black pb-2.5 mb-3">
                     <div className="w-[68px] h-[82px] flex items-center justify-center shrink-0 mr-3">
-                      <img 
-                        src={logoSrc} 
-                        alt="Logo Kab Malang" 
-                        className="max-w-full max-h-full object-contain" 
-                      />
+                      {logoSrc ? (
+                        <img 
+                          src={logoSrc} 
+                          alt="Logo Kab Malang" 
+                          className="max-w-full max-h-full object-contain" 
+                        />
+                      ) : (
+                        <KabupatenMalangLogo className="w-full h-full object-contain" />
+                      )}
                     </div>
                     <div className="flex-1 text-center leading-[1.18]">
                       <div className="text-[13pt] font-semibold tracking-wide">PEMERINTAH KABUPATEN MALANG</div>
