@@ -85,19 +85,34 @@ export const PrintDocument: React.FC<PrintDocumentProps> = ({ data, uploads }) =
   };
 
   // Custom signatures state
-  const [form, setForm] = useState({
-    hari: 'Selasa',
-    tanggalTeks: 'Satu',
-    bulanTeks: 'September',
-    tahunTeks: 'Dua Ribu Dua Puluh Enam',
-    tanggalAcara: '1 September 2026',
-    namaWalidata: 'Drs. ATSALIS SUPRIYANTO, M.Si.',
-    nipWalidata: '196711301988091001',
-    namaKoordinator: 'Ir. TOMIE HERAWANTO, M.P.',
-    nipKoordinator: '196611261993031004',
-    namaProdusen: 'YUDHI HINDHARTO, S.T., M.Si.',
-    nipProdusen: '197206121998031007',
-    jabatanProdusen: 'Kepala Perangkat Daerah',
+  const [form, setForm] = useState(() => {
+    const defaults = {
+      hari: 'Selasa',
+      tanggalTeks: 'Satu',
+      bulanTeks: 'September',
+      tahunTeks: 'Dua Ribu Dua Puluh Enam',
+      tanggalAcara: '1 September 2026',
+      namaWalidata: 'Drs. ATSALIS SUPRIYANTO, M.Si.',
+      nipWalidata: '196711301988091001',
+      namaKoordinator: 'Ir. TOMIE HERAWANTO, M.P.',
+      nipKoordinator: '196611261993031004',
+      namaProdusen: 'YUDHI HINDHARTO, S.T., M.Si.',
+      nipProdusen: '197206121998031007',
+      jabatanProdusen: 'Kepala Perangkat Daerah',
+    };
+    try {
+      const saved = localStorage.getItem('app-global-signers');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        return {
+          ...defaults,
+          ...parsed,
+        };
+      }
+    } catch (err) {
+      console.warn('Gagal membaca global signers di PrintDocument:', err);
+    }
+    return defaults;
   });
 
   const [isYearDropdownOpen, setIsYearDropdownOpen] = useState(false);

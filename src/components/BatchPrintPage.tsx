@@ -19,7 +19,10 @@ import {
   Layers,
   Filter,
   Eye,
-  Info
+  Info,
+  Users,
+  PenLine,
+  Check
 } from 'lucide-react';
 import { producerConfigService, getSmartJabatan } from '../services/producerConfigService';
 
@@ -36,6 +39,20 @@ const INDONESIAN_MONTHS = [
   'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'
 ];
 
+const DEFAULT_GLOBAL_SIGNERS = {
+  hari: 'Selasa',
+  tanggalTeks: 'Satu',
+  bulanTeks: 'September',
+  tahunTeks: 'Dua Ribu Dua Puluh Enam',
+  tanggalAcara: '1 September 2026',
+  namaWalidata: 'Drs. ATSALIS SUPRIYANTO, M.Si.',
+  nipWalidata: '196711301988091001',
+  jabatanWalidata: 'Kepala Dinas Komunikasi dan Informatika',
+  namaKoordinator: 'Ir. TOMIE HERAWANTO, M.P.',
+  nipKoordinator: '196611261993031004',
+  jabatanKoordinator: 'Kepala Badan Perencanaan Pembangunan Daerah',
+};
+
 export const BatchPrintPage: React.FC<BatchPrintPageProps> = ({ data, uploads }) => {
   const [selectedYears, setSelectedYears] = useState<string[]>([]);
   const [searchQuery, setSearchQuery] = useState<string>('');
@@ -51,18 +68,57 @@ export const BatchPrintPage: React.FC<BatchPrintPageProps> = ({ data, uploads })
   const [nomorPrefix, setNomorPrefix] = useState<string>('500.14/');
   const [nomorSuffix, setNomorSuffix] = useState<string>('/35.07.315/2026');
 
-  // Walidata & Koordinator Signatures
-  const [globalSigners, setGlobalSigners] = useState({
-    hari: 'Selasa',
-    tanggalTeks: 'Satu',
-    bulanTeks: 'September',
-    tahunTeks: 'Dua Ribu Dua Puluh Enam',
-    tanggalAcara: '1 September 2026',
-    namaWalidata: 'Drs. ATSALIS SUPRIYANTO, M.Si.',
-    nipWalidata: '196711301988091001',
-    namaKoordinator: 'Ir. TOMIE HERAWANTO, M.P.',
-    nipKoordinator: '196611261993031004',
+  // Walidata & Koordinator Signatures (persisted in localStorage)
+  const [globalSigners, setGlobalSigners] = useState(() => {
+    try {
+      const saved = localStorage.getItem('app-global-signers');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        return {
+          ...DEFAULT_GLOBAL_SIGNERS,
+          ...parsed,
+        };
+      }
+    } catch (err) {
+      console.warn('Gagal membaca global signers dari localStorage:', err);
+    }
+    return DEFAULT_GLOBAL_SIGNERS;
   });
+
+  const [isSignersEditorOpen, setIsSignersEditorOpen] = useState(false);
+  const [showSavedFeedback, setShowSavedFeedback] = useState(false);
+
+  const updateGlobalSigners = (updates: Partial<typeof DEFAULT_GLOBAL_SIGNERS>) => {
+    setGlobalSigners(prev => {
+      const updated = { ...prev, ...updates };
+      try {
+        localStorage.setItem('app-global-signers', JSON.stringify(updated));
+      } catch (err) {
+        console.warn('Gagal menyimpan global signers ke localStorage:', err);
+      }
+      return updated;
+    });
+    setShowSavedFeedback(true);
+    setTimeout(() => setShowSavedFeedback(false), 2000);
+  };
+
+  const handleResetGlobalSigners = () => {
+    setGlobalSigners(prev => ({
+      ...DEFAULT_GLOBAL_SIGNERS,
+      hari: prev.hari,
+      tanggalTeks: prev.tanggalTeks,
+      bulanTeks: prev.bulanTeks,
+      tahunTeks: prev.tahunTeks,
+      tanggalAcara: prev.tanggalAcara,
+    }));
+    try {
+      localStorage.removeItem('app-global-signers');
+    } catch (err) {
+      console.warn('Gagal reset global signers:', err);
+    }
+    setShowSavedFeedback(true);
+    setTimeout(() => setShowSavedFeedback(false), 2000);
+  };
 
   // Kop Logo state (persisted in localStorage)
   const [logoSrc] = useState<string>(() => {
@@ -114,14 +170,13 @@ export const BatchPrintPage: React.FC<BatchPrintPageProps> = ({ data, uploads })
     const tahunTeks = mode === 'terbilang' ? numberToWordsID(year) : year.toString();
     const tanggalAcara = `${day} ${monthName} ${year}`;
 
-    setGlobalSigners(prev => ({
-      ...prev,
+    updateGlobalSigners({
       hari: dayName,
       tanggalTeks,
       bulanTeks,
       tahunTeks,
       tanggalAcara
-    }));
+    });
   };
 
   const handleDateChange = (newDateStr: string) => {
@@ -296,7 +351,7 @@ export const BatchPrintPage: React.FC<BatchPrintPageProps> = ({ data, uploads })
             </h1>
           </div>
           <p className="text-sm text-on-surface-variant">
-            Atur dan edit penanda tangan (Kepala Perangkat Daerah/Produsen Data) untuk setiap instansi secara individual sebelum dicetak sekaligus.
+            Atur dan edit penanda tangan (Walidata, Koordinator, serta Kepala Perangkat Daerah) sebelum dicetak sekaligus.
           </p>
         </div>
 
@@ -306,7 +361,7 @@ export const BatchPrintPage: React.FC<BatchPrintPageProps> = ({ data, uploads })
             className="flex items-center gap-2 px-4 py-2.5 rounded-xl border border-outline-variant/30 text-on-surface hover:bg-surface-variant/40 transition-colors text-sm font-medium"
           >
             <Settings2 className="w-4 h-4 text-primary" />
-            <span>Pengaturan Global</span>
+            <span>Pengaturan Lengkap</span>
             {isGlobalSettingsOpen ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
           </button>
 
@@ -321,21 +376,228 @@ export const BatchPrintPage: React.FC<BatchPrintPageProps> = ({ data, uploads })
         </div>
       </div>
 
+      {/* Quick Access Card: Penanda Tangan Walidata & Koordinator (Always Visible & Expandable) */}
+      <div className="bg-surface-container-low/70 backdrop-blur-xl p-5 sm:p-6 rounded-3xl border border-outline-variant/20 shadow-sm print:hidden">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div className="flex items-start sm:items-center gap-3.5">
+            <div className="w-10 h-10 rounded-2xl bg-primary/10 border border-primary/20 flex items-center justify-center text-primary shrink-0">
+              <Users className="w-5 h-5" />
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <h2 className="text-base font-bold text-on-surface">Penanda Tangan Walidata & Koordinator</h2>
+                {showSavedFeedback && (
+                  <span className="inline-flex items-center gap-1 text-[11px] font-medium text-emerald-400 bg-emerald-950/40 border border-emerald-500/30 px-2 py-0.5 rounded-full animate-fade-in">
+                    <Check className="w-3 h-3" /> Tersimpan Otomatis
+                  </span>
+                )}
+              </div>
+              <p className="text-xs text-on-surface-variant mt-0.5">
+                Nama dan NIP ini otomatis tercantum di seluruh lembar Berita Acara semua instansi yang dicetak massal.
+              </p>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2 self-end sm:self-auto">
+            <button
+              onClick={() => setIsSignersEditorOpen(!isSignersEditorOpen)}
+              className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold transition-all ${
+                isSignersEditorOpen 
+                  ? 'bg-primary text-on-primary shadow-sm' 
+                  : 'bg-surface-variant/60 text-on-surface hover:bg-surface-variant border border-outline-variant/30'
+              }`}
+            >
+              <PenLine className="w-3.5 h-3.5" />
+              <span>{isSignersEditorOpen ? 'Tutup Form Edit' : 'Edit Nama & NIP Walidata / Koordinator'}</span>
+              {isSignersEditorOpen ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
+            </button>
+          </div>
+        </div>
+
+        {/* Overview Status (When not editing or always previewed) */}
+        {!isSignersEditorOpen && (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mt-4 pt-4 border-t border-outline-variant/10">
+            <div className="p-3 rounded-2xl bg-surface-container-lowest/60 border border-outline-variant/20 flex items-center justify-between">
+              <div>
+                <span className="text-[11px] font-medium text-primary uppercase tracking-wider block mb-0.5">Walidata (Diskominfo)</span>
+                <p className="text-xs font-bold text-on-surface">{globalSigners.namaWalidata}</p>
+                <p className="text-[11px] text-on-surface-variant font-mono">NIP. {globalSigners.nipWalidata}</p>
+              </div>
+              <button 
+                onClick={() => setIsSignersEditorOpen(true)}
+                className="text-xs text-primary hover:underline ml-2 shrink-0"
+              >
+                Ubah
+              </button>
+            </div>
+
+            <div className="p-3 rounded-2xl bg-surface-container-lowest/60 border border-outline-variant/20 flex items-center justify-between">
+              <div>
+                <span className="text-[11px] font-medium text-primary uppercase tracking-wider block mb-0.5">Koordinator (Bappeda)</span>
+                <p className="text-xs font-bold text-on-surface">{globalSigners.namaKoordinator}</p>
+                <p className="text-[11px] text-on-surface-variant font-mono">NIP. {globalSigners.nipKoordinator}</p>
+              </div>
+              <button 
+                onClick={() => setIsSignersEditorOpen(true)}
+                className="text-xs text-primary hover:underline ml-2 shrink-0"
+              >
+                Ubah
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Detailed Form Editor (Expandable) */}
+        {isSignersEditorOpen && (
+          <div className="mt-5 pt-5 border-t border-outline-variant/15 space-y-5 animate-fade-in">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+              
+              {/* Form Walidata */}
+              <div className="p-4 rounded-2xl bg-surface-container-lowest/70 border border-outline-variant/30 space-y-3">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <span className="w-2 h-2 rounded-full bg-cyan-400"></span>
+                    <h3 className="text-xs font-bold text-on-surface uppercase tracking-wider">
+                      Walidata (Dinas Kominfo)
+                    </h3>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="text-[11px] font-medium text-on-surface-variant block mb-1">
+                    Nama Lengkap & Gelar Walidata
+                  </label>
+                  <input
+                    type="text"
+                    value={globalSigners.namaWalidata}
+                    onChange={e => updateGlobalSigners({ namaWalidata: e.target.value })}
+                    className="w-full px-3 py-2 rounded-xl bg-surface border border-outline-variant/40 text-on-surface text-xs focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary font-medium"
+                    placeholder="Contoh: Drs. ATSALIS SUPRIYANTO, M.Si."
+                  />
+                </div>
+
+                <div>
+                  <label className="text-[11px] font-medium text-on-surface-variant block mb-1">
+                    NIP Walidata
+                  </label>
+                  <input
+                    type="text"
+                    value={globalSigners.nipWalidata}
+                    onChange={e => updateGlobalSigners({ nipWalidata: e.target.value })}
+                    className="w-full px-3 py-2 rounded-xl bg-surface border border-outline-variant/40 text-on-surface text-xs focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary font-mono"
+                    placeholder="Contoh: 196711301988091001"
+                  />
+                </div>
+
+                <div>
+                  <label className="text-[11px] font-medium text-on-surface-variant block mb-1">
+                    Jabatan Walidata
+                  </label>
+                  <input
+                    type="text"
+                    value={globalSigners.jabatanWalidata || 'Kepala Dinas Komunikasi dan Informatika'}
+                    onChange={e => updateGlobalSigners({ jabatanWalidata: e.target.value })}
+                    className="w-full px-3 py-2 rounded-xl bg-surface border border-outline-variant/40 text-on-surface text-xs focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+                    placeholder="Kepala Dinas Komunikasi dan Informatika"
+                  />
+                </div>
+              </div>
+
+              {/* Form Koordinator */}
+              <div className="p-4 rounded-2xl bg-surface-container-lowest/70 border border-outline-variant/30 space-y-3">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <span className="w-2 h-2 rounded-full bg-amber-400"></span>
+                    <h3 className="text-xs font-bold text-on-surface uppercase tracking-wider">
+                      Koordinator (Bappeda)
+                    </h3>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="text-[11px] font-medium text-on-surface-variant block mb-1">
+                    Nama Lengkap & Gelar Koordinator
+                  </label>
+                  <input
+                    type="text"
+                    value={globalSigners.namaKoordinator}
+                    onChange={e => updateGlobalSigners({ namaKoordinator: e.target.value })}
+                    className="w-full px-3 py-2 rounded-xl bg-surface border border-outline-variant/40 text-on-surface text-xs focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary font-medium"
+                    placeholder="Contoh: Ir. TOMIE HERAWANTO, M.P."
+                  />
+                </div>
+
+                <div>
+                  <label className="text-[11px] font-medium text-on-surface-variant block mb-1">
+                    NIP Koordinator
+                  </label>
+                  <input
+                    type="text"
+                    value={globalSigners.nipKoordinator}
+                    onChange={e => updateGlobalSigners({ nipKoordinator: e.target.value })}
+                    className="w-full px-3 py-2 rounded-xl bg-surface border border-outline-variant/40 text-on-surface text-xs focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary font-mono"
+                    placeholder="Contoh: 196611261993031004"
+                  />
+                </div>
+
+                <div>
+                  <label className="text-[11px] font-medium text-on-surface-variant block mb-1">
+                    Jabatan Koordinator
+                  </label>
+                  <input
+                    type="text"
+                    value={globalSigners.jabatanKoordinator || 'Kepala Badan Perencanaan Pembangunan Daerah'}
+                    onChange={e => updateGlobalSigners({ jabatanKoordinator: e.target.value })}
+                    className="w-full px-3 py-2 rounded-xl bg-surface border border-outline-variant/40 text-on-surface text-xs focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+                    placeholder="Kepala Badan Perencanaan Pembangunan Daerah"
+                  />
+                </div>
+              </div>
+
+            </div>
+
+            <div className="flex flex-wrap items-center justify-between gap-3 pt-2">
+              <button
+                type="button"
+                onClick={handleResetGlobalSigners}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-outline-variant/30 text-xs font-medium text-on-surface-variant hover:text-on-surface hover:bg-surface-variant/40 transition-colors"
+              >
+                <RotateCcw className="w-3.5 h-3.5" />
+                <span>Reset ke Default Resmi</span>
+              </button>
+
+              <div className="flex items-center gap-3">
+                <span className="text-[11px] text-on-surface-variant">
+                  Perubahan tersimpan otomatis di browser
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setIsSignersEditorOpen(false)}
+                  className="px-4 py-1.5 rounded-xl bg-primary text-on-primary text-xs font-semibold hover:bg-primary-container transition-colors shadow-sm cursor-pointer"
+                >
+                  Selesai
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+
       {/* Global Settings Panel (Collapsible) */}
       {isGlobalSettingsOpen && (
         <div className="bg-surface-container-low/80 backdrop-blur-xl p-6 rounded-3xl border border-outline-variant/20 shadow-md flex flex-col gap-6 print:hidden">
           <div className="flex items-center justify-between border-b border-outline-variant/10 pb-4">
             <h2 className="text-base font-semibold text-on-surface flex items-center gap-2">
               <Settings2 className="w-4 h-4 text-primary" />
-              Pengaturan Kop, Tanggal & Penanda Tangan Global
+              Pengaturan Kop, Format Nomor & Tanggal
             </h2>
             <span className="text-xs text-on-surface-variant">
               Berlaku untuk seluruh lembar Berita Acara
             </span>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {/* Nomor Surat & Tanggal */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* Nomor Surat */}
             <div className="space-y-4">
               <h3 className="text-sm font-semibold text-primary uppercase tracking-wider">Format Nomor Surat</h3>
               <div>
@@ -411,45 +673,6 @@ export const BatchPrintPage: React.FC<BatchPrintPageProps> = ({ data, uploads })
 
               <div className="text-xs text-on-surface-variant">
                 Tanggal Acara: <strong className="text-on-surface">{globalSigners.tanggalAcara}</strong>
-              </div>
-            </div>
-
-            {/* Penanda Tangan Walidata & Koordinator */}
-            <div className="space-y-4">
-              <h3 className="text-sm font-semibold text-primary uppercase tracking-wider">Walidata & Koordinator</h3>
-              
-              <div>
-                <label className="text-xs text-on-surface-variant block mb-1">Nama Walidata (Diskominfo)</label>
-                <input
-                  type="text"
-                  value={globalSigners.namaWalidata}
-                  onChange={e => setGlobalSigners({ ...globalSigners, namaWalidata: e.target.value })}
-                  className="w-full px-3 py-1.5 rounded-xl bg-surface border border-outline-variant/40 text-on-surface text-xs focus:border-primary focus:outline-none mb-1.5"
-                />
-                <input
-                  type="text"
-                  value={globalSigners.nipWalidata}
-                  onChange={e => setGlobalSigners({ ...globalSigners, nipWalidata: e.target.value })}
-                  className="w-full px-3 py-1.5 rounded-xl bg-surface border border-outline-variant/40 text-on-surface text-xs focus:border-primary focus:outline-none"
-                  placeholder="NIP Walidata"
-                />
-              </div>
-
-              <div>
-                <label className="text-xs text-on-surface-variant block mb-1">Nama Koordinator (Bappeda)</label>
-                <input
-                  type="text"
-                  value={globalSigners.namaKoordinator}
-                  onChange={e => setGlobalSigners({ ...globalSigners, namaKoordinator: e.target.value })}
-                  className="w-full px-3 py-1.5 rounded-xl bg-surface border border-outline-variant/40 text-on-surface text-xs focus:border-primary focus:outline-none mb-1.5"
-                />
-                <input
-                  type="text"
-                  value={globalSigners.nipKoordinator}
-                  onChange={e => setGlobalSigners({ ...globalSigners, nipKoordinator: e.target.value })}
-                  className="w-full px-3 py-1.5 rounded-xl bg-surface border border-outline-variant/40 text-on-surface text-xs focus:border-primary focus:outline-none"
-                  placeholder="NIP Koordinator"
-                />
               </div>
             </div>
           </div>
@@ -878,7 +1101,7 @@ export const BatchPrintPage: React.FC<BatchPrintPageProps> = ({ data, uploads })
                         <td style={{ width: '50%', border: 'none', textAlign: 'center', verticalAlign: 'top', padding: '0 8px' }}>
                           <div className="font-normal leading-tight">
                             Walidata,<br/>
-                            Kepala Dinas Komunikasi dan Informatika<br/>
+                            {globalSigners.jabatanWalidata || 'Kepala Dinas Komunikasi dan Informatika'}<br/>
                             Kabupaten Malang
                           </div>
                         </td>
@@ -902,7 +1125,7 @@ export const BatchPrintPage: React.FC<BatchPrintPageProps> = ({ data, uploads })
                           <div style={{ display: 'inline-block', width: '380px', textAlign: 'center' }}>
                             <div className="font-normal leading-tight">
                               Koordinator,<br/>
-                              Kepala Badan Perencanaan Pembangunan Daerah<br/>
+                              {globalSigners.jabatanKoordinator || 'Kepala Badan Perencanaan Pembangunan Daerah'}<br/>
                               Kabupaten Malang
                             </div>
                             <div style={{ height: '48px' }}></div>
