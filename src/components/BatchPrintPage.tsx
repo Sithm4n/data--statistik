@@ -22,6 +22,7 @@ import {
   Info
 } from 'lucide-react';
 import { producerConfigService, getSmartJabatan } from '../services/producerConfigService';
+import { LOGO_MALANG_SVG } from '../assets/logoKabMalang';
 
 interface BatchPrintPageProps {
   data: AllData | null;
@@ -60,6 +61,15 @@ export const BatchPrintPage: React.FC<BatchPrintPageProps> = ({ data, uploads })
     nipWalidata: '196711301988091001',
     namaKoordinator: 'Ir. TOMIE HERAWANTO, M.P.',
     nipKoordinator: '196611261993031004',
+  });
+
+  // Kop Logo state (persisted in localStorage)
+  const [logoSrc] = useState<string>(() => {
+    try {
+      return localStorage.getItem('app-kop-logo') || LOGO_MALANG_SVG;
+    } catch {
+      return LOGO_MALANG_SVG;
+    }
   });
 
   const [isGlobalSettingsOpen, setIsGlobalSettingsOpen] = useState(false);
@@ -732,6 +742,7 @@ export const BatchPrintPage: React.FC<BatchPrintPageProps> = ({ data, uploads })
           const prodEWalidata = (data?.eWalidata || []).filter(filterByProd);
           const prodSektoral = (data?.sektoral || []).filter(filterByProd);
           const prodSpasial = (data?.spasial || []).filter(filterByProd);
+          const prodTotal = prodEWalidata.length + prodSektoral.length + prodSpasial.length;
 
           return (
             <div 
@@ -748,65 +759,107 @@ export const BatchPrintPage: React.FC<BatchPrintPageProps> = ({ data, uploads })
               
               {/* Screen-only separator bar */}
               <div className="bg-primary/10 border-b border-primary/20 text-primary px-6 py-2 text-xs font-mono flex items-center justify-between print:hidden">
-                <span>Dokumen #{prodIndex + 1}: <strong>{prodName}</strong></span>
+                <span>Dokumen #{prodIndex + 1}: <strong>{prodName}</strong> ({prodTotal} Baris Data)</span>
                 <span>Penanda Tangan: {config.nama} ({config.jabatan})</span>
               </div>
 
               {/* ================= PAGE 1: BERITA ACARA ================= */}
-              <div className="p-[15mm] print:p-0 flex flex-col justify-between" style={{ minHeight: '270mm' }}>
+              <div 
+                className="p-[12mm] sm:p-[15mm] print:p-0 print-page-break flex flex-col justify-between"
+                style={{ 
+                  pageBreakAfter: 'always', 
+                  breakAfter: 'page',
+                  boxSizing: 'border-box'
+                }}
+              >
                 <div>
                   {/* Kop Surat */}
-                  <div className="flex items-center gap-4 border-b-[3px] border-double border-black pb-3 mb-4">
-                    <div className="w-[75px] h-[75px] flex items-center justify-center shrink-0">
+                  <div className="flex items-center border-b-[3px] border-double border-black pb-2.5 mb-3">
+                    <div className="w-[68px] h-[82px] flex items-center justify-center shrink-0 mr-3">
                       <img 
-                        src="/lambang_kabupaten_malang.png" 
+                        src={logoSrc} 
                         alt="Logo Kab Malang" 
                         className="max-w-full max-h-full object-contain" 
                       />
                     </div>
-                    <div className="flex-1 text-center leading-[1.15]">
-                      <div className="text-[14pt]">PEMERINTAH KABUPATEN MALANG</div>
-                      <div className="text-[18pt] font-bold tracking-wide">DINAS KOMUNIKASI DAN INFORMATIKA</div>
-                      <div className="text-[10pt]">Jalan K.H. Agus Salim No. 7 Gedung J Lantai 3, Malang, Jawa Timur</div>
-                      <div className="text-[10pt]">Telepon: (0341) 408788, Pos-el : kominfo@malangkab.go.id</div>
+                    <div className="flex-1 text-center leading-[1.18]">
+                      <div className="text-[13pt] font-semibold tracking-wide">PEMERINTAH KABUPATEN MALANG</div>
+                      <div className="text-[16pt] font-bold tracking-wider">DINAS KOMUNIKASI DAN INFORMATIKA</div>
+                      <div className="text-[9.5pt]">Jalan K.H. Agus Salim No. 7 Gedung J Lantai 3, Malang, Jawa Timur</div>
+                      <div className="text-[9.5pt]">Telepon/ Faksimile (0341) 408788 Laman : https://kominfo.malangkab.go.id</div>
+                      <div className="text-[9.5pt]">Pos-el : kominfo@malangkab.go.id, Kode Pos : 65119</div>
                     </div>
                   </div>
 
                   {/* Title (No Underscore, Font Arial) */}
-                  <div className="text-center font-bold mb-3 leading-[1.15]">
-                    <div className="text-[14pt] mb-1">BERITA ACARA</div>
-                    <div className="text-[12pt] uppercase">DAFTAR DATA STATISTIK SEKTORAL DAERAH</div>
-                    <div className="text-[12pt] uppercase">{prodName}</div>
-                    <div className="text-[12pt] uppercase">KABUPATEN MALANG</div>
-                    <div className="text-[12pt] mt-1 font-normal">
+                  <div className="text-center font-bold mb-3 leading-[1.18]">
+                    <div className="text-[13pt] mb-0.5">BERITA ACARA</div>
+                    <div className="text-[11.5pt] uppercase">DAFTAR DATA STATISTIK SEKTORAL DAERAH</div>
+                    <div className="text-[11.5pt] uppercase">{prodName}</div>
+                    <div className="text-[11.5pt] uppercase">KABUPATEN MALANG</div>
+                    <div className="text-[11pt] mt-1 font-normal">
                       Nomor : {fullNomorSurat}
                     </div>
                   </div>
 
                   {/* Body Content */}
-                  <div className="text-justify text-[12pt] mb-3 leading-[1.15]">
+                  <div className="text-justify text-[11pt] mb-3 leading-[1.2]">
                     <p className="indent-8 mb-2">
                       Pada Hari ini, <strong>{autoFillDate ? (globalSigners.hari || '.....') : '.....'}</strong> tanggal <strong>{autoFillDate ? (globalSigners.tanggalTeks || '.....') : '.....'}</strong> bulan <strong>{autoFillDate ? (globalSigners.bulanTeks || '.....') : '.....'}</strong> tahun <strong>{autoFillDate ? (globalSigners.tahunTeks || '.....') : '.....'}</strong>, bertempat di Kabupaten Malang, 
                       dilaksanakan Penetapan Daftar Data Statistik Sektoral Daerah pada 
-                      <strong> {prodName} Kabupaten Malang</strong>.
+                      <strong> {prodName} </strong> 
+                      dan disepakati empat hal sebagai berikut :
                     </p>
-                    <p className="indent-8 mb-2">
-                      Daftar Data Statistik Sektoral Daerah yang telah disepakati bersama antara Walidata, Koordinator Forum Satu Data Indonesia Tingkat Daerah dan Produsen Data, tercantum dalam Lampiran yang merupakan bagian tidak terpisahkan dari Berita Acara ini.
-                    </p>
-                    <p className="indent-8 mb-2">
-                      Demikian Berita Acara ini dibuat dengan sebenarnya dan ditandatangani untuk dipergunakan sebagaimana mestinya.
-                    </p>
+
+                    <table className="w-full text-[11pt] align-top leading-[1.2] border-0" style={{ border: 'none', borderCollapse: 'collapse' }}>
+                      <tbody>
+                        <tr style={{ border: 'none' }}>
+                          <td style={{ width: '85px', verticalAlign: 'top', border: 'none', padding: '1.5px 0' }}>KESATU</td>
+                          <td style={{ width: '15px', verticalAlign: 'top', border: 'none', padding: '1.5px 0' }}>:</td>
+                          <td style={{ textAlign: 'justify', verticalAlign: 'top', border: 'none', padding: '1.5px 0' }}>
+                            Daftar Data sebagaimana terlampir pada Berita Acara ini, ditetapkan 
+                            sejumlah <strong>{prodTotal} ({numberToWordsID(prodTotal)})</strong> Data Statistik Sektoral Daerah (DSSD).
+                          </td>
+                        </tr>
+                        <tr style={{ border: 'none' }}>
+                          <td style={{ verticalAlign: 'top', border: 'none', padding: '1.5px 0' }}>KEDUA</td>
+                          <td style={{ verticalAlign: 'top', border: 'none', padding: '1.5px 0' }}>:</td>
+                          <td style={{ textAlign: 'justify', verticalAlign: 'top', border: 'none', padding: '1.5px 0' }}>
+                            Daftar Data tersebut digunakan sebagai dasar bagi Kepala Perangkat 
+                            Daerah selaku Produsen Data dalam menyampaikan ke Walidata sesuai 
+                            urusan tugas dan kewenangannya.
+                          </td>
+                        </tr>
+                        <tr style={{ border: 'none' }}>
+                          <td style={{ verticalAlign: 'top', border: 'none', padding: '1.5px 0' }}>KETIGA</td>
+                          <td style={{ verticalAlign: 'top', border: 'none', padding: '1.5px 0' }}>:</td>
+                          <td style={{ textAlign: 'justify', verticalAlign: 'top', border: 'none', padding: '1.5px 0' }}>
+                            Daftar Data dimaksud mencakup klasifikasi tentang Kode DSSD, Uraian 
+                            DSSD, Satuan, dan Periode.
+                          </td>
+                        </tr>
+                        <tr style={{ border: 'none' }}>
+                          <td style={{ verticalAlign: 'top', border: 'none', padding: '1.5px 0' }}>KEEMPAT</td>
+                          <td style={{ verticalAlign: 'top', border: 'none', padding: '1.5px 0' }}>:</td>
+                          <td style={{ textAlign: 'justify', verticalAlign: 'top', border: 'none', padding: '1.5px 0' }}>
+                            Badan Perencanaan dan Pembangunan Daerah Kabupaten Malang selaku 
+                            Koordinator Data telah memverifikasi daftar data tersebut dan akan 
+                            digunakan sebagai acuan dalam perencanaan pembangunan.
+                          </td>
+                        </tr>
+                      </tbody>
+                    </table>
                   </div>
                 </div>
 
                 {/* Signatures Table (Page 1) */}
-                <div className="text-[12pt] text-center leading-[1.15]" style={{ breakInside: 'avoid', pageBreakInside: 'avoid' }}>
-                  <div className="mb-4">
+                <div className="text-[11pt] text-center leading-[1.18] avoid-break mt-2" style={{ breakInside: 'avoid', pageBreakInside: 'avoid' }}>
+                  <div className="mb-2.5">
                     Malang, {globalSigners.tanggalAcara}<br/>
                     Tim Pelaksana Satu Data Kabupaten Malang
                   </div>
 
-                  <table className="w-full border-0 mb-4" style={{ border: 'none', borderCollapse: 'collapse', width: '100%', background: 'transparent' }}>
+                  <table className="w-full border-0 mb-1 avoid-break" style={{ border: 'none', borderCollapse: 'collapse', pageBreakInside: 'avoid', breakInside: 'avoid', width: '100%', background: 'transparent' }}>
                     <tbody>
                       <tr style={{ border: 'none' }}>
                         <td style={{ width: '50%', border: 'none', textAlign: 'center', verticalAlign: 'top', padding: '0 8px' }}>
@@ -825,8 +878,8 @@ export const BatchPrintPage: React.FC<BatchPrintPageProps> = ({ data, uploads })
                         </td>
                       </tr>
                       <tr style={{ border: 'none' }}>
-                        <td style={{ height: '60px', border: 'none', padding: 0 }}></td>
-                        <td style={{ height: '60px', border: 'none', padding: 0 }}></td>
+                        <td style={{ height: '48px', border: 'none', padding: 0 }}></td>
+                        <td style={{ height: '48px', border: 'none', padding: 0 }}></td>
                       </tr>
                       <tr style={{ border: 'none' }}>
                         <td style={{ width: '50%', border: 'none', textAlign: 'center', verticalAlign: 'bottom', padding: '0 8px' }}>
@@ -839,14 +892,14 @@ export const BatchPrintPage: React.FC<BatchPrintPageProps> = ({ data, uploads })
                         </td>
                       </tr>
                       <tr style={{ border: 'none' }}>
-                        <td colSpan={2} style={{ border: 'none', textAlign: 'center', paddingTop: '16px', paddingBottom: 0 }}>
-                          <div style={{ display: 'inline-block', width: '320px', textAlign: 'center' }}>
+                        <td colSpan={2} style={{ border: 'none', textAlign: 'center', paddingTop: '10px', paddingBottom: 0 }}>
+                          <div style={{ display: 'inline-block', width: '380px', textAlign: 'center' }}>
                             <div className="font-normal leading-tight">
                               Koordinator,<br/>
                               Kepala Badan Perencanaan Pembangunan Daerah<br/>
                               Kabupaten Malang
                             </div>
-                            <div className="h-[60px]"></div>
+                            <div style={{ height: '48px' }}></div>
                             <div className="font-bold underline">{globalSigners.namaKoordinator}</div>
                             <div>NIP. {globalSigners.nipKoordinator}</div>
                           </div>
@@ -859,7 +912,7 @@ export const BatchPrintPage: React.FC<BatchPrintPageProps> = ({ data, uploads })
 
               {/* ================= PAGE 2: LAMPIRAN BERITA ACARA ================= */}
               <div 
-                className="p-[15mm] print:p-0"
+                className="p-[12mm] sm:p-[15mm] print:p-0"
                 style={{ 
                   pageBreakBefore: 'always', 
                   breakBefore: 'page' 
