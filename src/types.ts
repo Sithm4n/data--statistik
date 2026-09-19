@@ -99,3 +99,12 @@ export interface SecurityStatus {
   lockoutMinutes: number;
 }
 
+export interface ProdusenSignerConfig {
+  prodName: string;
+  jabatan: string;
+  nama: string;
+  nip: string;
+  selected?: boolean;
+}
+
+

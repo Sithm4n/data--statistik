@@ -1,6 +1,7 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { AllData, UploadRecord } from '../types';
-import { Printer, Settings2, FileText, ChevronDown, Check, Calendar, Sparkles, CheckCircle2 } from 'lucide-react';
+import { Printer, Settings2, FileText, ChevronDown, Check, Calendar, Sparkles, CheckCircle2, Layers } from 'lucide-react';
+import { producerConfigService, getSmartJabatan } from '../services/producerConfigService';
 
 interface PrintDocumentProps {
   data: AllData | null;
@@ -109,6 +110,33 @@ export const PrintDocument: React.FC<PrintDocumentProps> = ({ data, uploads }) =
     const dateStr = `${yyyy}-${mm}-${dd}`;
     setSelectedDate(dateStr);
     applyDateAutomation(dateStr, dateTextMode);
+  };
+
+  // Sync signer details when selectedProdusen changes
+  useEffect(() => {
+    if (selectedProdusen && selectedProdusen !== '__ALL__') {
+      const cfg = producerConfigService.getProducerConfig(selectedProdusen);
+      setForm(prev => ({
+        ...prev,
+        namaProdusen: cfg.nama,
+        nipProdusen: cfg.nip,
+        jabatanProdusen: cfg.jabatan
+      }));
+    }
+  }, [selectedProdusen]);
+
+  const handleProdusenFieldChange = (field: 'namaProdusen' | 'nipProdusen' | 'jabatanProdusen', value: string) => {
+    setForm(prev => ({ ...prev, [field]: value }));
+    if (selectedProdusen && selectedProdusen !== '__ALL__') {
+      const keyMap: Record<string, string> = {
+        namaProdusen: 'nama',
+        nipProdusen: 'nip',
+        jabatanProdusen: 'jabatan'
+      };
+      producerConfigService.updateSingleProducer(selectedProdusen, {
+        [keyMap[field]]: value
+      });
+    }
   };
 
   // Extract unique Produsen Data and Years
@@ -585,11 +613,14 @@ export const PrintDocument: React.FC<PrintDocumentProps> = ({ data, uploads }) =
               </div>
 
               <div>
-                <label className="block text-[11px] font-medium text-slate-300 mb-1">Jabatan Produsen Data</label>
+                <label className="block text-[11px] font-medium text-slate-300 mb-1">
+                  Jabatan Produsen Data {selectedProdusen !== '__ALL__' && <span className="text-cyan-400 font-normal">({selectedProdusen})</span>}
+                </label>
                 <input 
                   type="text" 
                   value={form.jabatanProdusen} 
-                  onChange={e => setForm({...form, jabatanProdusen: e.target.value})}
+                  onChange={e => handleProdusenFieldChange('jabatanProdusen', e.target.value)}
+                  placeholder="Contoh: Kepala Dinas Komunikasi dan Informatika"
                   className="w-full bg-slate-800/50 border border-white/10 rounded-xl px-3 py-1.5 text-xs text-slate-200 focus:outline-none focus:border-cyan-400"
                 />
               </div>
@@ -600,7 +631,8 @@ export const PrintDocument: React.FC<PrintDocumentProps> = ({ data, uploads }) =
                   <input 
                     type="text" 
                     value={form.namaProdusen} 
-                    onChange={e => setForm({...form, namaProdusen: e.target.value})} 
+                    onChange={e => handleProdusenFieldChange('namaProdusen', e.target.value)} 
+                    placeholder="Nama Lengkap & Gelar"
                     className="w-full bg-slate-800/50 border border-white/10 rounded-xl px-2.5 py-1.5 text-xs text-slate-200 focus:outline-none focus:border-cyan-400" 
                   />
                 </div>
@@ -609,7 +641,8 @@ export const PrintDocument: React.FC<PrintDocumentProps> = ({ data, uploads }) =
                   <input 
                     type="text" 
                     value={form.nipProdusen} 
-                    onChange={e => setForm({...form, nipProdusen: e.target.value})} 
+                    onChange={e => handleProdusenFieldChange('nipProdusen', e.target.value)} 
+                    placeholder="18 Digit NIP"
                     className="w-full bg-slate-800/50 border border-white/10 rounded-xl px-2.5 py-1.5 text-xs font-mono text-slate-200 focus:outline-none focus:border-cyan-400" 
                   />
                 </div>
@@ -681,6 +714,10 @@ export const PrintDocument: React.FC<PrintDocumentProps> = ({ data, uploads }) =
           const prodSektoral = (data.sektoral || []).filter(item => item['Produsen Data'] === prodName && selectedYears.includes(item.Tahun));
           const prodSpasial = (data.spasial || []).filter(item => item['Produsen Data'] === prodName && selectedYears.includes(item.Tahun));
           const prodTotal = prodEWalidata.length + prodSektoral.length + prodSpasial.length;
+
+          const prodSigner = (selectedProdusen === '__ALL__')
+            ? producerConfigService.getProducerConfig(prodName)
+            : { nama: form.namaProdusen, nip: form.nipProdusen, jabatan: form.jabatanProdusen };
 
           return (
             <div 
@@ -796,7 +833,7 @@ export const PrintDocument: React.FC<PrintDocumentProps> = ({ data, uploads }) =
                         <td style={{ width: '50%', border: 'none', textAlign: 'center', verticalAlign: 'top', padding: '0 8px' }}>
                           <div className="font-normal leading-tight">
                             Produsen Data,<br/>
-                            {form.jabatanProdusen || `Kepala ${prodName}`}<br/>
+                            {prodSigner.jabatan || `Kepala ${prodName}`}<br/>
                             Kabupaten Malang
                           </div>
                         </td>
@@ -814,8 +851,8 @@ export const PrintDocument: React.FC<PrintDocumentProps> = ({ data, uploads }) =
                       </tr>
                       <tr style={{ border: 'none' }}>
                         <td style={{ width: '50%', border: 'none', textAlign: 'center', verticalAlign: 'bottom', padding: '0 8px' }}>
-                          <div className="font-bold underline">{form.namaProdusen}</div>
-                          <div>NIP. {form.nipProdusen}</div>
+                          <div className="font-bold underline">{prodSigner.nama}</div>
+                          <div>NIP. {prodSigner.nip}</div>
                         </td>
                         <td style={{ width: '50%', border: 'none', textAlign: 'center', verticalAlign: 'bottom', padding: '0 8px' }}>
                           <div className="font-bold underline">{form.namaWalidata}</div>
@@ -975,12 +1012,12 @@ export const PrintDocument: React.FC<PrintDocumentProps> = ({ data, uploads }) =
                           >
                             <div className="font-normal leading-normal">
                               Produsen Data,<br/>
-                              {form.jabatanProdusen || `Kepala ${prodName}`}<br/>
+                              {prodSigner.jabatan || `Kepala ${prodName}`}<br/>
                               Kabupaten Malang
                             </div>
                             <div style={{ height: '60px' }}></div>
-                            <div className="font-bold underline leading-normal">{form.namaProdusen}</div>
-                            <div className="leading-normal">NIP. {form.nipProdusen}</div>
+                            <div className="font-bold underline leading-normal">{prodSigner.nama}</div>
+                            <div className="leading-normal">NIP. {prodSigner.nip}</div>
                           </div>
                         </td>
                       </tr>

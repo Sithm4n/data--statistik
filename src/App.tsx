@@ -1,9 +1,30 @@
 import React, { useState, useMemo, useEffect, useCallback, useRef } from 'react';
-import { LayoutDashboard, Clock, Plus, Database, Search, Bell, BarChart2, User, Printer, Menu, X, Shield, LogOut, KeyRound, Cloud, RefreshCw } from 'lucide-react';
+import { 
+  LayoutDashboard, 
+  Clock, 
+  Plus, 
+  Database, 
+  Search, 
+  Bell, 
+  BarChart2, 
+  User, 
+  Printer, 
+  Menu, 
+  X, 
+  Shield, 
+  LogOut, 
+  KeyRound, 
+  Cloud, 
+  RefreshCw, 
+  Sun, 
+  Moon, 
+  Layers 
+} from 'lucide-react';
 import { FileUpload } from './components/FileUpload';
 import { Dashboard } from './components/Dashboard';
 import { UploadLogs } from './components/UploadLogs';
 import { PrintDocument } from './components/PrintDocument';
+import { BatchPrintPage } from './components/BatchPrintPage';
 import { LoginPage } from './components/LoginPage';
 import { AccountSecurityModal } from './components/AccountSecurityModal';
 import { authService } from './services/authService';
@@ -16,11 +37,28 @@ export default function App() {
   const [isSecurityModalOpen, setIsSecurityModalOpen] = useState(false);
   const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
   const [uploads, setUploads] = useState<UploadRecord[]>([]);
-  const [currentView, setCurrentView] = useState<'upload' | 'dashboard' | 'logs' | 'print'>('upload');
+  const [currentView, setCurrentView] = useState<'upload' | 'dashboard' | 'logs' | 'print' | 'batch-print'>('upload');
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isCloudConnected, setIsCloudConnected] = useState<boolean | null>(null);
   const [isSyncing, setIsSyncing] = useState<boolean>(false);
   const isSyncingRef = useRef(false);
+
+  // Theme support (Dark Mode & Light Mode)
+  const [theme, setTheme] = useState<'dark' | 'light'>(() => {
+    const saved = localStorage.getItem('app-theme');
+    if (saved === 'light' || saved === 'dark') return saved;
+    return 'dark';
+  });
+
+  useEffect(() => {
+    document.documentElement.classList.toggle('light', theme === 'light');
+    document.documentElement.setAttribute('data-theme', theme);
+    localStorage.setItem('app-theme', theme);
+  }, [theme]);
+
+  const toggleTheme = () => {
+    setTheme(prev => (prev === 'dark' ? 'light' : 'dark'));
+  };
 
   // Fungsi untuk memuat ulang data dari Supabase (sinkronisasi multi-device di background)
   const refreshDataFromCloud = useCallback(async (silent = false) => {
@@ -350,7 +388,7 @@ export default function App() {
             }}
             className={`w-full flex items-center gap-4 px-6 py-3.5 sm:py-4 rounded-xl transition-all duration-300 group ${
               currentView === 'dashboard' 
-                ? 'bg-primary-container text-on-primary-container shadow-[0_0_15px_rgba(2,132,199,0.3)]' 
+                ? 'bg-primary-container text-on-primary-container shadow-[0_0_15px_rgba(2,132,199,0.3)] font-semibold' 
                 : 'text-on-surface-variant hover:bg-surface-variant/30 hover:text-on-surface'
             }`}
           >
@@ -365,7 +403,7 @@ export default function App() {
             }}
             className={`w-full flex items-center gap-4 px-6 py-3.5 sm:py-4 rounded-xl transition-all duration-300 group ${
               currentView === 'logs'
-                ? 'bg-primary-container text-on-primary-container shadow-[0_0_15px_rgba(2,132,199,0.3)]'
+                ? 'bg-primary-container text-on-primary-container shadow-[0_0_15px_rgba(2,132,199,0.3)] font-semibold'
                 : 'text-on-surface-variant hover:bg-surface-variant/30 hover:text-on-surface'
             }`}
           >
@@ -375,17 +413,32 @@ export default function App() {
 
           <button
             onClick={() => {
+              setCurrentView('batch-print');
+              setIsMobileMenuOpen(false);
+            }}
+            className={`w-full flex items-center gap-4 px-6 py-3.5 sm:py-4 rounded-xl transition-all duration-300 group ${
+              currentView === 'batch-print'
+                ? 'bg-primary-container text-on-primary-container shadow-[0_0_15px_rgba(2,132,199,0.3)] font-semibold'
+                : 'text-on-surface-variant hover:bg-surface-variant/30 hover:text-on-surface'
+            }`}
+          >
+            <Layers className="w-5 h-5 group-hover:scale-110 transition-transform text-primary" />
+            <span className="text-base font-medium">Cetak Massal Produsen</span>
+          </button>
+
+          <button
+            onClick={() => {
               setCurrentView('print');
               setIsMobileMenuOpen(false);
             }}
             className={`w-full flex items-center gap-4 px-6 py-3.5 sm:py-4 rounded-xl transition-all duration-300 group ${
               currentView === 'print'
-                ? 'bg-primary-container text-on-primary-container shadow-[0_0_15px_rgba(2,132,199,0.3)]'
+                ? 'bg-primary-container text-on-primary-container shadow-[0_0_15px_rgba(2,132,199,0.3)] font-semibold'
                 : 'text-on-surface-variant hover:bg-surface-variant/30 hover:text-on-surface'
             }`}
           >
             <Printer className="w-5 h-5 group-hover:scale-110 transition-transform" />
-            <span className="text-base font-medium">Cetak PDF</span>
+            <span className="text-base font-medium">Cetak Dokumen</span>
           </button>
 
           <button
@@ -395,7 +448,7 @@ export default function App() {
             }}
             className={`w-full flex items-center gap-4 px-6 py-3.5 sm:py-4 rounded-xl transition-all duration-300 group ${
               currentView === 'upload'
-                ? 'bg-primary-container text-on-primary-container shadow-[0_0_15px_rgba(2,132,199,0.3)]'
+                ? 'bg-primary-container text-on-primary-container shadow-[0_0_15px_rgba(2,132,199,0.3)] font-semibold'
                 : 'text-on-surface-variant hover:bg-surface-variant/30 hover:text-on-surface'
             }`}
           >
@@ -404,6 +457,22 @@ export default function App() {
           </button>
         </nav>
         <div className="p-4 sm:p-6 mt-auto border-t border-outline-variant/10 flex flex-col gap-3">
+          
+          {/* Quick Theme Switcher in Sidebar */}
+          <button
+            onClick={toggleTheme}
+            className="w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl bg-surface-container/60 hover:bg-surface-variant/40 border border-outline-variant/20 text-on-surface transition-all text-xs font-medium"
+            title="Ganti Mode Gelap / Terang"
+          >
+            <span className="flex items-center gap-2">
+              {theme === 'dark' ? <Moon className="w-4 h-4 text-primary" /> : <Sun className="w-4 h-4 text-amber-500" />}
+              <span>{theme === 'dark' ? 'Mode Gelap (Aktif)' : 'Mode Terang (Aktif)'}</span>
+            </span>
+            <span className="text-[10px] px-2 py-0.5 rounded bg-surface-variant text-on-surface-variant uppercase">
+              Ubah
+            </span>
+          </button>
+
           <div className="flex items-center gap-3 p-3 rounded-2xl bg-surface-variant/20 backdrop-blur-md">
             <div className="relative">
               <div className="w-10 h-10 rounded-full bg-primary/20 border border-primary/40 flex items-center justify-center text-primary shadow-lg shadow-primary/10 shrink-0">
@@ -448,40 +517,54 @@ export default function App() {
       {/* Main Content Area */}
       <div className="pl-0 lg:pl-72 flex-1 flex flex-col w-full min-h-screen print:pl-0 print:p-0 print:m-0 print:block print:w-full print:min-h-0 print:h-auto print:bg-white pb-16 lg:pb-0">
         {/* Header matching Google Stitch TopNavigationBar */}
-        <header className="fixed top-0 left-0 lg:left-72 right-0 h-16 lg:h-18 bg-slate-950/70 border-b border-white/5 backdrop-blur-xl z-40 flex items-center justify-between px-4 sm:px-8 shadow-lg print:hidden">
+        <header className="fixed top-0 left-0 lg:left-72 right-0 h-16 lg:h-18 bg-surface-container-low/80 border-b border-outline-variant/20 backdrop-blur-xl z-40 flex items-center justify-between px-4 sm:px-8 shadow-sm print:hidden">
           <div className="flex items-center gap-3">
             <button
               onClick={() => setIsMobileMenuOpen(true)}
-              className="lg:hidden p-2 -ml-2 rounded-xl text-slate-300 hover:bg-white/5 transition-colors"
+              className="lg:hidden p-2 -ml-2 rounded-xl text-on-surface-variant hover:bg-surface-variant/30 transition-colors"
               aria-label="Buka Menu"
             >
               <Menu className="w-6 h-6" />
             </button>
             <div className="flex items-center gap-3">
               <div className="h-9 w-9 rounded-xl bg-gradient-to-tr from-sky-600 to-cyan-400 p-0.5 shadow-[0_0_25px_-5px_rgba(56,189,248,0.35)] shrink-0 hidden sm:block">
-                <div className="w-full h-full bg-slate-900 rounded-[10px] flex items-center justify-center">
-                  <BarChart2 className="w-5 h-5 text-cyan-400" />
+                <div className="w-full h-full bg-surface-container rounded-[10px] flex items-center justify-center">
+                  <BarChart2 className="w-5 h-5 text-primary" />
                 </div>
               </div>
-              <h1 className="text-base sm:text-lg font-semibold tracking-tight text-white flex items-center gap-2 truncate">
+              <h1 className="text-base sm:text-lg font-semibold tracking-tight text-on-surface flex items-center gap-2 truncate">
                 Sistem Informasi Statistik
               </h1>
             </div>
           </div>
 
-          <div className="flex items-center gap-3 sm:gap-3.5">
+          <div className="flex items-center gap-2 sm:gap-3">
+            {/* Light / Dark Mode Toggle */}
+            <button
+              onClick={toggleTheme}
+              className="p-2 rounded-full bg-surface-container border border-outline-variant/30 text-on-surface-variant hover:text-on-surface hover:bg-surface-variant/40 transition-all cursor-pointer"
+              title={theme === 'dark' ? "Beralih ke Mode Terang" : "Beralih ke Mode Gelap"}
+              aria-label="Ubah Tema"
+            >
+              {theme === 'dark' ? (
+                <Sun className="w-4 h-4 sm:w-4.5 sm:h-4.5 text-amber-400" />
+              ) : (
+                <Moon className="w-4 h-4 sm:w-4.5 sm:h-4.5 text-slate-700" />
+              )}
+            </button>
+
             {/* Supabase Cloud Status Indicator & Realtime Sync Button */}
             <button 
               onClick={() => refreshDataFromCloud(false)}
               disabled={isSyncing}
-              className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-full bg-slate-900/80 hover:bg-slate-800 border border-slate-700/60 hover:border-sky-500/50 text-[11px] font-medium shadow-inner transition-all cursor-pointer disabled:opacity-75"
+              className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-full bg-surface-container hover:bg-surface-variant border border-outline-variant/30 hover:border-primary/50 text-[11px] font-medium shadow-inner transition-all cursor-pointer disabled:opacity-75"
               title={isCloudConnected ? "Realtime Cloud Aktif (Klik untuk sinkronkan ulang langsung)" : "Menghubungkan ke Supabase..."}
             >
               <div className={`w-2 h-2 rounded-full ${isCloudConnected ? 'bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.8)]' : isCloudConnected === false ? 'bg-rose-400' : 'bg-amber-400 animate-ping'}`} />
-              <span className="text-slate-300 flex items-center gap-1.5">
-                <Cloud className="w-3 h-3 text-sky-400" />
-                <span className="font-mono text-[10px] text-slate-300 hidden sm:inline">Supabase</span>
-                <RefreshCw className={`w-3 h-3 text-cyan-400 ${isSyncing ? 'animate-spin' : 'opacity-70 hover:opacity-100'}`} />
+              <span className="text-on-surface-variant flex items-center gap-1.5">
+                <Cloud className="w-3 h-3 text-primary" />
+                <span className="font-mono text-[10px] text-on-surface-variant hidden sm:inline">Supabase</span>
+                <RefreshCw className={`w-3 h-3 text-primary ${isSyncing ? 'animate-spin' : 'opacity-70 hover:opacity-100'}`} />
               </span>
             </button>
 
@@ -491,7 +574,7 @@ export default function App() {
                 setCurrentView('upload');
                 setIsMobileMenuOpen(false);
               }}
-              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full text-xs font-semibold bg-gradient-to-r from-sky-500 to-cyan-500 hover:from-sky-400 hover:to-cyan-400 text-white shadow-[0_0_20px_-3px_rgba(14,165,233,0.45)] transition-all duration-200 cursor-pointer hover:-translate-y-0.5 active:translate-y-0"
+              className="inline-flex items-center gap-1.5 px-3.5 sm:px-4 py-2 rounded-full text-xs font-semibold bg-primary hover:bg-primary-container text-on-primary shadow-[0_0_20px_-3px_rgba(14,165,233,0.45)] transition-all duration-200 cursor-pointer hover:-translate-y-0.5 active:translate-y-0"
             >
               <Plus className="w-3.5 h-3.5 stroke-[2.5]" />
               <span className="hidden sm:inline">Add Data</span>
@@ -501,17 +584,17 @@ export default function App() {
             {/* User Chip */}
             <button
               onClick={() => setIsSecurityModalOpen(true)}
-              className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-slate-800/80 border border-white/10 text-xs font-medium text-slate-300 hover:border-cyan-500/40 hover:text-white transition-all cursor-pointer"
+              className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-surface-container border border-outline-variant/30 text-xs font-medium text-on-surface-variant hover:border-primary/40 hover:text-on-surface transition-all cursor-pointer"
               title="Pusat Keamanan & Kredensial Akun"
             >
-              <Shield className="w-3.5 h-3.5 text-cyan-400 shrink-0" />
+              <Shield className="w-3.5 h-3.5 text-primary shrink-0" />
               <span className="font-mono">@{currentUser.username}</span>
             </button>
 
             {/* Logout Action Button */}
             <button
               onClick={handleRequestLogout}
-              className="p-2 rounded-full text-slate-400 hover:text-rose-400 hover:bg-white/5 transition-colors duration-200 cursor-pointer"
+              className="p-2 rounded-full text-on-surface-variant hover:text-error hover:bg-error-container/20 transition-colors duration-200 cursor-pointer"
               title="Keluar"
               aria-label="Keluar"
             >
@@ -568,6 +651,16 @@ export default function App() {
             <UploadLogs uploads={uploads} onDeleteUpload={handleDeleteUpload} />
           )}
 
+          {currentView === 'batch-print' && (
+            <div className="p-4 sm:p-8">
+              <BatchPrintPage data={aggregatedData} uploads={uploads} />
+            </div>
+          )}
+
+          {currentView === 'print' && (
+            <PrintDocument data={aggregatedData} uploads={uploads} />
+          )}
+
           {currentView === 'dashboard' && !aggregatedData && (
             <div className="flex flex-col items-center justify-center h-full pt-16 sm:pt-32 text-on-surface-variant relative print:hidden px-4 text-center">
               <div className="absolute top-0 right-0 w-[300px] sm:w-[500px] h-[300px] sm:h-[500px] bg-primary/10 rounded-full blur-[100px] -z-10 mix-blend-screen pointer-events-none"></div>
@@ -580,10 +673,6 @@ export default function App() {
                 Mulai Unggah Data
               </button>
             </div>
-          )}
-
-          {currentView === 'print' && (
-            <PrintDocument data={aggregatedData} uploads={uploads} />
           )}
         </main>
 
@@ -599,13 +688,13 @@ export default function App() {
             <span className="text-[10px]">Dashboard</span>
           </button>
           <button
-            onClick={() => { setCurrentView('logs'); setIsMobileMenuOpen(false); }}
+            onClick={() => { setCurrentView('batch-print'); setIsMobileMenuOpen(false); }}
             className={`flex flex-col items-center justify-center gap-1 flex-1 py-1 transition-colors ${
-              currentView === 'logs' ? 'text-primary font-bold' : 'text-on-surface-variant hover:text-on-surface'
+              currentView === 'batch-print' ? 'text-primary font-bold' : 'text-on-surface-variant hover:text-on-surface'
             }`}
           >
-            <Clock className="w-5 h-5" />
-            <span className="text-[10px]">Riwayat</span>
+            <Layers className="w-5 h-5" />
+            <span className="text-[10px]">Massal</span>
           </button>
           <button
             onClick={() => { setCurrentView('print'); setIsMobileMenuOpen(false); }}
@@ -614,7 +703,16 @@ export default function App() {
             }`}
           >
             <Printer className="w-5 h-5" />
-            <span className="text-[10px]">Cetak PDF</span>
+            <span className="text-[10px]">Cetak</span>
+          </button>
+          <button
+            onClick={() => { setCurrentView('logs'); setIsMobileMenuOpen(false); }}
+            className={`flex flex-col items-center justify-center gap-1 flex-1 py-1 transition-colors ${
+              currentView === 'logs' ? 'text-primary font-bold' : 'text-on-surface-variant hover:text-on-surface'
+            }`}
+          >
+            <Clock className="w-5 h-5" />
+            <span className="text-[10px]">Riwayat</span>
           </button>
           <button
             onClick={() => { setCurrentView('upload'); setIsMobileMenuOpen(false); }}
