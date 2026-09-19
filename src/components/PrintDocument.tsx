@@ -2,8 +2,8 @@ import React, { useState, useMemo, useEffect } from 'react';
 import { AllData, UploadRecord } from '../types';
 import { Printer, Settings2, FileText, ChevronDown, Check, Calendar, Sparkles, CheckCircle2, Layers, Image as ImageIcon, RotateCcw } from 'lucide-react';
 import { producerConfigService, getSmartJabatan } from '../services/producerConfigService';
-import { LOGO_MALANG_SVG } from '../assets/logoKabMalang';
-import { KabupatenMalangLogo } from './KabupatenMalangLogo';
+
+const DEFAULT_LOGO_URL = 'https://upload.wikimedia.org/wikipedia/commons/thumb/d/d9/Logo_Kabupaten_Malang_-_Seal_of_Malang_Regency.svg/500px-Logo_Kabupaten_Malang_-_Seal_of_Malang_Regency.svg.png';
 
 interface PrintDocumentProps {
   data: AllData | null;
@@ -539,15 +539,16 @@ export const PrintDocument: React.FC<PrintDocumentProps> = ({ data, uploads }) =
                 
                 <div className="flex items-center gap-3 p-2.5 rounded-xl bg-slate-800/40 border border-white/5">
                   <div className="w-10 h-12 bg-white/5 rounded-lg p-1 border border-white/10 flex items-center justify-center shrink-0">
-                    {logoSrc ? (
-                      <img src={logoSrc} alt="Preview Logo" className="max-w-full max-h-full object-contain" />
-                    ) : (
-                      <KabupatenMalangLogo className="w-full h-full object-contain" />
-                    )}
+                    <img 
+                      src={logoSrc || DEFAULT_LOGO_URL} 
+                      alt="Preview Logo" 
+                      className="max-w-full max-h-full object-contain"
+                      crossOrigin="anonymous"
+                    />
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="text-[11px] font-medium text-slate-200 truncate">
-                      {logoSrc ? 'Logo Kustom Aktif' : 'Lambang Resmi Kab. Malang (Vektor)'}
+                      {logoSrc ? 'Logo Kustom Aktif' : 'Logo Resmi Kab. Malang'}
                     </p>
                     <label className="inline-flex items-center gap-1 text-[10px] text-cyan-400 hover:text-cyan-300 hover:underline cursor-pointer mt-0.5">
                       <span>Unggah Gambar Logo (.png / .jpg / .svg)</span>
@@ -839,15 +840,12 @@ export const PrintDocument: React.FC<PrintDocumentProps> = ({ data, uploads }) =
                   {/* KOP Surat */}
                   <div className="flex items-center border-b-[3px] border-double border-black pb-2.5 mb-3">
                     <div className="w-[68px] h-[82px] flex items-center justify-center shrink-0 mr-3">
-                      {logoSrc ? (
-                        <img 
-                          src={logoSrc} 
-                          alt="Logo Kab Malang" 
-                          className="max-w-full max-h-full object-contain" 
-                        />
-                      ) : (
-                        <KabupatenMalangLogo className="w-full h-full object-contain" />
-                      )}
+                      <img 
+                        src={logoSrc || DEFAULT_LOGO_URL} 
+                        alt="Logo Kab Malang" 
+                        className="max-w-full max-h-full object-contain"
+                        crossOrigin="anonymous" 
+                      />
                     </div>
                     <div className="flex-1 text-center leading-[1.18]">
                       <div className="text-[13pt] font-semibold tracking-wide">PEMERINTAH KABUPATEN MALANG</div>

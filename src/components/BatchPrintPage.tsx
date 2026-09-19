@@ -22,8 +22,8 @@ import {
   Info
 } from 'lucide-react';
 import { producerConfigService, getSmartJabatan } from '../services/producerConfigService';
-import { LOGO_MALANG_SVG } from '../assets/logoKabMalang';
-import { KabupatenMalangLogo } from './KabupatenMalangLogo';
+
+const DEFAULT_LOGO_URL = 'https://upload.wikimedia.org/wikipedia/commons/thumb/d/d9/Logo_Kabupaten_Malang_-_Seal_of_Malang_Regency.svg/500px-Logo_Kabupaten_Malang_-_Seal_of_Malang_Regency.svg.png';
 
 interface BatchPrintPageProps {
   data: AllData | null;
@@ -781,15 +781,12 @@ export const BatchPrintPage: React.FC<BatchPrintPageProps> = ({ data, uploads })
                   {/* Kop Surat */}
                   <div className="flex items-center border-b-[3px] border-double border-black pb-2.5 mb-3">
                     <div className="w-[68px] h-[82px] flex items-center justify-center shrink-0 mr-3">
-                      {logoSrc ? (
-                        <img 
-                          src={logoSrc} 
-                          alt="Logo Kab Malang" 
-                          className="max-w-full max-h-full object-contain" 
-                        />
-                      ) : (
-                        <KabupatenMalangLogo className="w-full h-full object-contain" />
-                      )}
+                      <img 
+                        src={logoSrc || DEFAULT_LOGO_URL} 
+                        alt="Logo Kab Malang" 
+                        className="max-w-full max-h-full object-contain"
+                        crossOrigin="anonymous" 
+                      />
                     </div>
                     <div className="flex-1 text-center leading-[1.18]">
                       <div className="text-[13pt] font-semibold tracking-wide">PEMERINTAH KABUPATEN MALANG</div>
