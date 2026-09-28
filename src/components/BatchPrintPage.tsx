@@ -67,6 +67,7 @@ export const BatchPrintPage: React.FC<BatchPrintPageProps> = ({ data, uploads })
   // Nomor surat configuration
   const [nomorPrefix, setNomorPrefix] = useState<string>('500.14/');
   const [nomorSuffix, setNomorSuffix] = useState<string>('/35.07.315/2026');
+  const [forceSpasialNewPage, setForceSpasialNewPage] = useState<boolean>(false);
 
   // Walidata & Koordinator Signatures (persisted in localStorage)
   const [globalSigners, setGlobalSigners] = useState(() => {
@@ -675,6 +676,31 @@ export const BatchPrintPage: React.FC<BatchPrintPageProps> = ({ data, uploads })
                 Tanggal Acara: <strong className="text-on-surface">{globalSigners.tanggalAcara}</strong>
               </div>
             </div>
+
+            {/* Pengaturan Pemisahan Halaman & Anti Tanda Tangan Sendirian */}
+            <div className="md:col-span-2 pt-4 border-t border-outline-variant/10 space-y-3">
+              <h3 className="text-sm font-semibold text-primary uppercase tracking-wider">
+                Pengaturan Tata Letak Cetak Lampiran (Anti Tanda Tangan Sendirian)
+              </h3>
+              <div className="p-3.5 rounded-2xl bg-surface-container-lowest/80 border border-outline-variant/30">
+                <label className="flex items-start gap-3 cursor-pointer text-xs font-medium text-on-surface">
+                  <input 
+                    type="checkbox" 
+                    checked={forceSpasialNewPage} 
+                    onChange={e => setForceSpasialNewPage(e.target.checked)}
+                    className="rounded border-outline-variant/50 text-primary focus:ring-primary w-4 h-4 mt-0.5"
+                  />
+                  <div>
+                    <span className="font-semibold text-primary">
+                      Pindahkan Tabel Data Spasial & Tanda Tangan ke Halaman Baru
+                    </span>
+                    <p className="text-[11px] text-on-surface-variant font-normal mt-0.5 leading-relaxed">
+                      *Otomatis memindahkan bagian Data Spasial beserta tanda tangan Produsen Data ke halaman baru agar tanda tangan tidak terpisah sendirian di halaman terakhir saat data sebelumnya panjang.
+                    </p>
+                  </div>
+                </label>
+              </div>
+            </div>
           </div>
         </div>
       )}
@@ -949,6 +975,50 @@ export const BatchPrintPage: React.FC<BatchPrintPageProps> = ({ data, uploads })
         className="w-full mt-6"
         style={{ fontFamily: 'Arial, Helvetica, sans-serif' }}
       >
+        <style>
+          {`
+            @media print {
+              @page {
+                size: A4 portrait;
+                margin-top: 15mm;
+                margin-bottom: 15mm;
+                margin-left: 15mm;
+                margin-right: 15mm;
+              }
+              body, html {
+                background-color: #ffffff !important;
+                background: #ffffff !important;
+                color: #000000 !important;
+                font-family: Arial, Helvetica, sans-serif !important;
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
+              }
+              .print-page-break {
+                page-break-after: always !important;
+                break-after: page !important;
+              }
+              .print-page-break-before {
+                page-break-before: always !important;
+                break-before: page !important;
+              }
+              .avoid-break {
+                page-break-inside: avoid !important;
+                break-inside: avoid !important;
+              }
+              .force-new-page {
+                page-break-before: always !important;
+                break-before: page !important;
+              }
+              table {
+                page-break-inside: auto;
+              }
+              tr {
+                page-break-inside: avoid !important;
+                break-inside: avoid !important;
+              }
+            }
+          `}
+        </style>
         <div className="text-center font-mono text-xs text-on-surface-variant mb-4 uppercase tracking-widest print:hidden">
           —— PRATINJAU DOKUMEN CETAK (PRINT PREVIEW) ——
         </div>
@@ -1255,76 +1325,86 @@ export const BatchPrintPage: React.FC<BatchPrintPageProps> = ({ data, uploads })
                     </tbody>
                   </table>
 
-                  {/* Spasial Table */}
-                  <table className="w-full border-collapse border border-black border-t-0 mb-6">
-                    <thead>
-                      <tr>
-                        <th colSpan={6} className="border border-black p-1 text-left bg-gray-100 font-bold uppercase text-xs">
-                          Data Spasial
-                        </th>
-                      </tr>
-                      <tr className="text-center font-bold bg-gray-50">
-                        <th className="border border-black p-1 w-8">No</th>
-                        <th className="border border-black p-1 w-24">Kode Data</th>
-                        <th className="border border-black p-1">Nama Informasi Geospasial</th>
-                        <th className="border border-black p-1 w-24">Format</th>
-                        <th className="border border-black p-1 w-20">Skala</th>
-                        <th className="border border-black p-1">Produsen Data</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {prodSpasial.length > 0 ? (
-                        prodSpasial.map((row, idx) => (
-                          <tr key={`spa-${idx}`} className="align-top" style={{ pageBreakInside: 'avoid', breakInside: 'avoid' }}>
-                            <td className="border border-black p-1 text-center">{idx + 1}</td>
-                            <td className="border border-black p-1 font-mono">{row['Kode Data']}</td>
-                            <td className="border border-black p-1">{row['Nama Informasi Geospasial']}</td>
-                            <td className="border border-black p-1 text-center">
-                              {row['Format penyimpanan'] || row['Format penyimpanan data'] || row['Format Penyimpanan Data'] || '-'}
-                            </td>
-                            <td className="border border-black p-1 text-center">{row.Skala}</td>
-                            <td className="border border-black p-1">{row['Produsen Data']}</td>
-                          </tr>
-                        ))
-                      ) : (
+                  {/* Spasial Table & Footer Signature Container (Keeps Data Spasial and Signature together on the same page) */}
+                  <div 
+                    className={`avoid-break ${forceSpasialNewPage ? 'force-new-page pt-4' : ''}`}
+                    style={{
+                      pageBreakInside: 'avoid',
+                      breakInside: 'avoid',
+                      ...(forceSpasialNewPage ? { pageBreakBefore: 'always', breakBefore: 'page' } : {})
+                    }}
+                  >
+                    {/* Spasial Table */}
+                    <table className="w-full border-collapse border border-black border-t-0 mb-6">
+                      <thead>
                         <tr>
-                          <td colSpan={6} className="border border-black p-2 text-center text-gray-500 italic">
-                            Tidak ada data Spasial untuk instansi ini pada tahun terpilih
-                          </td>
+                          <th colSpan={6} className="border border-black p-1 text-left bg-gray-100 font-bold uppercase text-xs">
+                            Data Spasial
+                          </th>
                         </tr>
-                      )}
-                    </tbody>
-                  </table>
-                </div>
+                        <tr className="text-center font-bold bg-gray-50">
+                          <th className="border border-black p-1 w-8">No</th>
+                          <th className="border border-black p-1 w-24">Kode Data</th>
+                          <th className="border border-black p-1">Nama Informasi Geospasial</th>
+                          <th className="border border-black p-1 w-24">Format</th>
+                          <th className="border border-black p-1 w-20">Skala</th>
+                          <th className="border border-black p-1">Produsen Data</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {prodSpasial.length > 0 ? (
+                          prodSpasial.map((row, idx) => (
+                            <tr key={`spa-${idx}`} className="align-top" style={{ pageBreakInside: 'avoid', breakInside: 'avoid' }}>
+                              <td className="border border-black p-1 text-center">{idx + 1}</td>
+                              <td className="border border-black p-1 font-mono">{row['Kode Data']}</td>
+                              <td className="border border-black p-1">{row['Nama Informasi Geospasial']}</td>
+                              <td className="border border-black p-1 text-center">
+                                {row['Format penyimpanan'] || row['Format penyimpanan data'] || row['Format Penyimpanan Data'] || '-'}
+                              </td>
+                              <td className="border border-black p-1 text-center">{row.Skala}</td>
+                              <td className="border border-black p-1">{row['Produsen Data']}</td>
+                            </tr>
+                          ))
+                        ) : (
+                          <tr>
+                            <td colSpan={6} className="border border-black p-2 text-center text-gray-500 italic">
+                              Tidak ada data Spasial untuk instansi ini pada tahun terpilih
+                            </td>
+                          </tr>
+                        )}
+                      </tbody>
+                    </table>
 
-                {/* Footer Signature on Lampiran */}
-                <div className="avoid-break mt-6" style={{ pageBreakInside: 'avoid', breakInside: 'avoid' }}>
-                  <table className="w-full border-0" style={{ border: 'none', borderCollapse: 'collapse', width: '100%', background: 'transparent' }}>
-                    <tbody>
-                      <tr style={{ border: 'none' }}>
-                        <td style={{ width: '45%', border: 'none', padding: 0 }}></td>
-                        <td style={{ width: '55%', border: 'none', textAlign: 'center', padding: 0 }}>
-                          <div 
-                            className="text-sm" 
-                            style={{ 
-                              display: 'inline-block',
-                              width: '280px',
-                              textAlign: 'center'
-                            }}
-                          >
-                            <div className="font-normal leading-normal">
-                              Produsen Data,<br/>
-                              {config.jabatan || `Kepala ${prodName}`}<br/>
-                              Kabupaten Malang
-                            </div>
-                            <div style={{ height: '60px' }}></div>
-                            <div className="font-bold underline leading-normal">{config.nama}</div>
-                            <div className="leading-normal">NIP. {config.nip}</div>
-                          </div>
-                        </td>
-                      </tr>
-                    </tbody>
-                  </table>
+                    {/* Footer Signature on Lampiran */}
+                    <div className="avoid-break mt-6" style={{ pageBreakInside: 'avoid', breakInside: 'avoid' }}>
+                      <table className="w-full border-0" style={{ border: 'none', borderCollapse: 'collapse', width: '100%', background: 'transparent' }}>
+                        <tbody>
+                          <tr style={{ border: 'none' }}>
+                            <td style={{ width: '45%', border: 'none', padding: 0 }}></td>
+                            <td style={{ width: '55%', border: 'none', textAlign: 'center', padding: 0 }}>
+                              <div 
+                                className="text-sm" 
+                                style={{ 
+                                  display: 'inline-block',
+                                  width: '280px',
+                                  textAlign: 'center'
+                                }}
+                              >
+                                <div className="font-normal leading-normal">
+                                  Produsen Data,<br/>
+                                  {config.jabatan || `Kepala ${prodName}`}<br/>
+                                  Kabupaten Malang
+                                </div>
+                                <div style={{ height: '60px' }}></div>
+                                <div className="font-bold underline leading-normal">{config.nama}</div>
+                                <div className="leading-normal">NIP. {config.nip}</div>
+                              </div>
+                            </td>
+                          </tr>
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
                 </div>
 
               </div>

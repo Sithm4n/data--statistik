@@ -40,6 +40,7 @@ export const PrintDocument: React.FC<PrintDocumentProps> = ({ data, uploads }) =
   const [autoFillDate, setAutoFillDate] = useState<boolean>(true);
   const [marginSize, setMarginSize] = useState<string>('15mm');
   const [forceLampiranSignNewPage, setForceLampiranSignNewPage] = useState<boolean>(false);
+  const [forceSpasialNewPage, setForceSpasialNewPage] = useState<boolean>(false);
   
   // Nomor surat prefix & suffix matching Google Stitch Design
   const [nomorPrefix, setNomorPrefix] = useState<string>('500.14/');
@@ -679,22 +680,38 @@ export const PrintDocument: React.FC<PrintDocumentProps> = ({ data, uploads }) =
                 </div>
               </div>
 
-              {/* Signature Separation Option */}
-              <div className="p-3 rounded-xl bg-slate-800/30 border border-white/5">
+              {/* Signature Separation Options */}
+              <div className="p-3 rounded-xl bg-slate-800/30 border border-white/5 space-y-2.5">
                 <label className="flex items-start gap-2.5 cursor-pointer text-xs font-medium text-slate-200">
                   <input 
                     type="checkbox" 
-                    checked={forceLampiranSignNewPage} 
-                    onChange={e => setForceLampiranSignNewPage(e.target.checked)}
+                    checked={forceSpasialNewPage} 
+                    onChange={e => setForceSpasialNewPage(e.target.checked)}
                     className="rounded border-slate-600 text-cyan-500 focus:ring-cyan-500 w-4 h-4 mt-0.5"
                   />
                   <div>
-                    <span>Taruh Tanda Tangan Lampiran di Halaman Baru</span>
+                    <span className="flex items-center gap-1.5 font-semibold text-cyan-300">
+                      Pindahkan Data Spasial & TTD ke Halaman Baru
+                    </span>
                     <p className="text-[11px] text-slate-400 font-normal mt-0.5 leading-relaxed">
-                      *Default sistem otomatis mencegah tanda tangan terpotong dan menaruhnya utuh di halaman bawah jika ruang tidak cukup.
+                      *Mencegah tanda tangan sendirian di halaman terakhir dengan memindahkan tabel Data Spasial ke halaman berikutnya bersama tanda tangan.
                     </p>
                   </div>
                 </label>
+
+                <div className="pt-2 border-t border-white/5">
+                  <label className="flex items-start gap-2.5 cursor-pointer text-xs font-medium text-slate-300">
+                    <input 
+                      type="checkbox" 
+                      checked={forceLampiranSignNewPage} 
+                      onChange={e => setForceLampiranSignNewPage(e.target.checked)}
+                      className="rounded border-slate-600 text-cyan-500 focus:ring-cyan-500 w-4 h-4 mt-0.5"
+                    />
+                    <div>
+                      <span>Taruh Hanya Tanda Tangan Lampiran di Halaman Baru</span>
+                    </div>
+                  </label>
+                </div>
               </div>
 
             </div>
@@ -1070,75 +1087,85 @@ export const PrintDocument: React.FC<PrintDocumentProps> = ({ data, uploads }) =
                     </tbody>
                   </table>
 
-                  {/* Spasial Table */}
-                  <table className="w-full border-collapse border border-black mb-8 border-t-0">
-                    <thead>
-                      <tr className="bg-gray-100 font-bold text-center border-t border-black">
-                        <th colSpan={5} className="border border-black p-1 border-t-0">Data Spasial</th>
-                      </tr>
-                      <tr className="bg-gray-100 font-bold text-center">
-                        <th className="border border-black p-1 w-8">No</th>
-                        <th className="border border-black p-1 w-32">Kode</th>
-                        <th className="border border-black p-1">Nama Data</th>
-                        <th className="border border-black p-1 w-24">Format Data</th>
-                        <th className="border border-black p-1 w-16">Keterangan</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {prodSpasial.length > 0 ? prodSpasial.map((item, index) => (
-                        <tr key={index} className="text-center">
-                          <td className="border border-black p-1">{prodEWalidata.length + prodSektoral.length + index + 1}</td>
-                          <td className="border border-black p-1">{item['Kode Data'] || '-'}</td>
-                          <td className="border border-black p-1 text-left">{item['Nama Informasi Geospasial'] || '-'}</td>
-                          <td className="border border-black p-1">{item['Format penyimpanan data'] || item['Format Penyimpanan Data'] || item['Format penyimpanan'] || '-'}</td>
-                          <td className="border border-black p-1">{item.Tahun || '-'}</td>
-                        </tr>
-                      )) : (
-                        <tr><td colSpan={5} className="border border-black p-2 text-center text-gray-500 italic border-t-0">Tidak ada data</td></tr>
-                      )}
-                    </tbody>
-                  </table>
-
-                  {/* Final Signature on Lampiran - Bulletproof Table Layout for Print */}
-                  <table 
-                    className={`w-full border-0 ${forceLampiranSignNewPage ? 'force-new-page pt-8' : 'mt-8'} avoid-break`}
-                    style={{ 
-                      pageBreakInside: 'avoid', 
+                  {/* Spasial Table & Signature Container (Keeps Data Spasial and Signature together on same page) */}
+                  <div 
+                    className={`avoid-break ${forceSpasialNewPage ? 'force-new-page pt-4' : ''}`}
+                    style={{
+                      pageBreakInside: 'avoid',
                       breakInside: 'avoid',
-                      ...(forceLampiranSignNewPage ? { pageBreakBefore: 'always', breakBefore: 'page' } : {}),
-                      border: 'none',
-                      borderCollapse: 'collapse',
-                      width: '100%',
-                      backgroundColor: 'transparent'
+                      ...(forceSpasialNewPage ? { pageBreakBefore: 'always', breakBefore: 'page' } : {})
                     }}
                   >
-                    <tbody>
-                      <tr style={{ border: 'none' }}>
-                        <td style={{ width: '45%', border: 'none', padding: 0 }}></td>
-                        <td style={{ width: '55%', border: 'none', textAlign: 'center', padding: 0 }}>
-                          <div 
-                            className="text-sm avoid-break" 
-                            style={{ 
-                              display: 'inline-block',
-                              width: '280px',
-                              textAlign: 'center',
-                              pageBreakInside: 'avoid',
-                              breakInside: 'avoid'
-                            }}
-                          >
-                            <div className="font-normal leading-normal">
-                              Produsen Data,<br/>
-                              {prodSigner.jabatan || `Kepala ${prodName}`}<br/>
-                              Kabupaten Malang
+                    {/* Spasial Table */}
+                    <table className="w-full border-collapse border border-black mb-8 border-t-0">
+                      <thead>
+                        <tr className="bg-gray-100 font-bold text-center border-t border-black">
+                          <th colSpan={5} className="border border-black p-1 border-t-0">Data Spasial</th>
+                        </tr>
+                        <tr className="bg-gray-100 font-bold text-center">
+                          <th className="border border-black p-1 w-8">No</th>
+                          <th className="border border-black p-1 w-32">Kode</th>
+                          <th className="border border-black p-1">Nama Data</th>
+                          <th className="border border-black p-1 w-24">Format Data</th>
+                          <th className="border border-black p-1 w-16">Keterangan</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {prodSpasial.length > 0 ? prodSpasial.map((item, index) => (
+                          <tr key={index} className="text-center">
+                            <td className="border border-black p-1">{prodEWalidata.length + prodSektoral.length + index + 1}</td>
+                            <td className="border border-black p-1">{item['Kode Data'] || '-'}</td>
+                            <td className="border border-black p-1 text-left">{item['Nama Informasi Geospasial'] || '-'}</td>
+                            <td className="border border-black p-1">{item['Format penyimpanan data'] || item['Format Penyimpanan Data'] || item['Format penyimpanan'] || '-'}</td>
+                            <td className="border border-black p-1">{item.Tahun || '-'}</td>
+                          </tr>
+                        )) : (
+                          <tr><td colSpan={5} className="border border-black p-2 text-center text-gray-500 italic border-t-0">Tidak ada data</td></tr>
+                        )}
+                      </tbody>
+                    </table>
+
+                    {/* Final Signature on Lampiran - Bulletproof Table Layout for Print */}
+                    <table 
+                      className={`w-full border-0 ${forceLampiranSignNewPage ? 'force-new-page pt-8' : 'mt-8'} avoid-break`}
+                      style={{ 
+                        pageBreakInside: 'avoid', 
+                        breakInside: 'avoid',
+                        ...(forceLampiranSignNewPage ? { pageBreakBefore: 'always', breakBefore: 'page' } : {}),
+                        border: 'none',
+                        borderCollapse: 'collapse',
+                        width: '100%',
+                        backgroundColor: 'transparent'
+                      }}
+                    >
+                      <tbody>
+                        <tr style={{ border: 'none' }}>
+                          <td style={{ width: '45%', border: 'none', padding: 0 }}></td>
+                          <td style={{ width: '55%', border: 'none', textAlign: 'center', padding: 0 }}>
+                            <div 
+                              className="text-sm avoid-break" 
+                              style={{ 
+                                display: 'inline-block',
+                                width: '280px',
+                                textAlign: 'center',
+                                pageBreakInside: 'avoid',
+                                breakInside: 'avoid'
+                              }}
+                            >
+                              <div className="font-normal leading-normal">
+                                Produsen Data,<br/>
+                                {prodSigner.jabatan || `Kepala ${prodName}`}<br/>
+                                Kabupaten Malang
+                              </div>
+                              <div style={{ height: '60px' }}></div>
+                              <div className="font-bold underline leading-normal">{prodSigner.nama}</div>
+                              <div className="leading-normal">NIP. {prodSigner.nip}</div>
                             </div>
-                            <div style={{ height: '60px' }}></div>
-                            <div className="font-bold underline leading-normal">{prodSigner.nama}</div>
-                            <div className="leading-normal">NIP. {prodSigner.nip}</div>
-                          </div>
-                        </td>
-                      </tr>
-                    </tbody>
-                  </table>
+                          </td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
                 </div>
 
               </div>
