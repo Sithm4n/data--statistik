@@ -107,4 +107,44 @@ export interface ProdusenSignerConfig {
   selected?: boolean;
 }
 
+export type ComparisonStatus = 'NEW' | 'MODIFIED' | 'REMOVED' | 'SAME';
+
+export interface ComparisonItem {
+  id: string;
+  category: 'sektoral' | 'eWalidata' | 'spasial';
+  kode: string;
+  kodeBase?: string;
+  kodeCompare?: string;
+  uraian: string;
+  uraianBase?: string;
+  uraianCompare?: string;
+  satuan?: string;
+  satuanBase?: string;
+  satuanCompare?: string;
+  definisi?: string;
+  definisiBase?: string;
+  definisiCompare?: string;
+  produsen: string;
+  urusan?: string;
+  subKegiatan?: string;
+  status: ComparisonStatus;
+  differences: string[];
+  trend?: 'UP' | 'DOWN' | 'SAME';
+  valueBase?: number | string;
+  valueCompare?: number | string;
+}
+
+export interface ComparisonSummary {
+  baseYear: string;
+  compareYear: string;
+  totalBase: number;
+  totalCompare: number;
+  newCount: number;
+  modifiedCount: number;
+  removedCount: number;
+  sameCount: number;
+  percentChange: number;
+}
+
+
 

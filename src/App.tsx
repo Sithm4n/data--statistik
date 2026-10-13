@@ -18,13 +18,15 @@ import {
   RefreshCw, 
   Sun, 
   Moon, 
-  Layers 
+  Layers,
+  GitCompare 
 } from 'lucide-react';
 import { FileUpload } from './components/FileUpload';
 import { Dashboard } from './components/Dashboard';
 import { UploadLogs } from './components/UploadLogs';
 import { PrintDocument } from './components/PrintDocument';
 import { BatchPrintPage } from './components/BatchPrintPage';
+import { YearComparisonPage } from './components/YearComparisonPage';
 import { LoginPage } from './components/LoginPage';
 import { AccountSecurityModal } from './components/AccountSecurityModal';
 import { authService } from './services/authService';
@@ -37,7 +39,7 @@ export default function App() {
   const [isSecurityModalOpen, setIsSecurityModalOpen] = useState(false);
   const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
   const [uploads, setUploads] = useState<UploadRecord[]>([]);
-  const [currentView, setCurrentView] = useState<'upload' | 'dashboard' | 'logs' | 'print' | 'batch-print'>('upload');
+  const [currentView, setCurrentView] = useState<'upload' | 'dashboard' | 'logs' | 'print' | 'batch-print' | 'comparison'>('dashboard');
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isCloudConnected, setIsCloudConnected] = useState<boolean | null>(null);
   const [isSyncing, setIsSyncing] = useState<boolean>(false);
@@ -428,6 +430,21 @@ export default function App() {
 
           <button
             onClick={() => {
+              setCurrentView('comparison');
+              setIsMobileMenuOpen(false);
+            }}
+            className={`w-full flex items-center gap-4 px-6 py-3.5 sm:py-4 rounded-xl transition-all duration-300 group ${
+              currentView === 'comparison'
+                ? 'bg-primary-container text-on-primary-container shadow-[0_0_15px_rgba(2,132,199,0.3)] font-semibold'
+                : 'text-on-surface-variant hover:bg-surface-variant/30 hover:text-on-surface'
+            }`}
+          >
+            <GitCompare className="w-5 h-5 group-hover:scale-110 transition-transform text-cyan-400" />
+            <span className="text-base font-medium">Perbandingan Antartahun</span>
+          </button>
+
+          <button
+            onClick={() => {
               setCurrentView('print');
               setIsMobileMenuOpen(false);
             }}
@@ -657,6 +674,16 @@ export default function App() {
             </div>
           )}
 
+          {currentView === 'comparison' && (
+            <div className="p-4 sm:p-8">
+              <YearComparisonPage 
+                data={aggregatedData} 
+                uploads={uploads} 
+                onNavigateToUpload={() => setCurrentView('upload')}
+              />
+            </div>
+          )}
+
           {currentView === 'print' && (
             <PrintDocument data={aggregatedData} uploads={uploads} />
           )}
@@ -688,6 +715,15 @@ export default function App() {
             <span className="text-[10px]">Dashboard</span>
           </button>
           <button
+            onClick={() => { setCurrentView('comparison'); setIsMobileMenuOpen(false); }}
+            className={`flex flex-col items-center justify-center gap-1 flex-1 py-1 transition-colors ${
+              currentView === 'comparison' ? 'text-primary font-bold' : 'text-on-surface-variant hover:text-on-surface'
+            }`}
+          >
+            <GitCompare className="w-5 h-5" />
+            <span className="text-[10px]">Banding</span>
+          </button>
+          <button
             onClick={() => { setCurrentView('batch-print'); setIsMobileMenuOpen(false); }}
             className={`flex flex-col items-center justify-center gap-1 flex-1 py-1 transition-colors ${
               currentView === 'batch-print' ? 'text-primary font-bold' : 'text-on-surface-variant hover:text-on-surface'
@@ -704,15 +740,6 @@ export default function App() {
           >
             <Printer className="w-5 h-5" />
             <span className="text-[10px]">Cetak</span>
-          </button>
-          <button
-            onClick={() => { setCurrentView('logs'); setIsMobileMenuOpen(false); }}
-            className={`flex flex-col items-center justify-center gap-1 flex-1 py-1 transition-colors ${
-              currentView === 'logs' ? 'text-primary font-bold' : 'text-on-surface-variant hover:text-on-surface'
-            }`}
-          >
-            <Clock className="w-5 h-5" />
-            <span className="text-[10px]">Riwayat</span>
           </button>
           <button
             onClick={() => { setCurrentView('upload'); setIsMobileMenuOpen(false); }}
